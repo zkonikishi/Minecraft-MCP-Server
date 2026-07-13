@@ -143,6 +143,7 @@ test('list-current-window lists current window including empty slots', async (t)
 test('click-window-slot clicks selected slot', async (t) => {
   const { mockServer, factory } = createFactory();
   const clickWindowStub = sinon.stub().resolves();
+  const rightMouse = sinon.stub().resolves();
   const mockBot = {
     currentWindow: {
       id: 9,
@@ -152,7 +153,8 @@ test('click-window-slot clicks selected slot', async (t) => {
         { name: 'iron_sword', count: 1 }
       ]
     },
-    clickWindow: clickWindowStub
+    clickWindow: clickWindowStub,
+    simpleClick: { leftMouse: sinon.stub().resolves(), rightMouse }
   } as unknown as mineflayer.Bot;
   const getBot = () => mockBot;
 
@@ -161,8 +163,22 @@ test('click-window-slot clicks selected slot', async (t) => {
   const executor = toolExecutor(mockServer, 'click-window-slot');
   const result = await executor({ slot: 0, mouseButton: 1, mode: 0 });
 
-  t.true(clickWindowStub.calledOnceWith(0, 1, 0));
+  t.true(rightMouse.calledOnceWith(0));
+  t.false(clickWindowStub.called);
   t.true(result.content[0].text.includes('Clicked slot 0'));
+});
+
+test('click-window-slot preserves raw Mineflayer modes for advanced clicks', async (t) => {
+  const { mockServer, factory } = createFactory();
+  const clickWindow = sinon.stub().resolves();
+  const mockBot = {
+    currentWindow: { id: 13, type: 'custom', title: 'Test', slots: [{ name: 'paper', count: 1 }] },
+    clickWindow,
+    simpleClick: { leftMouse: sinon.stub().resolves(), rightMouse: sinon.stub().resolves() }
+  } as unknown as mineflayer.Bot;
+  registerWindowTools(factory, () => mockBot);
+  await toolExecutor(mockServer, 'click-window-slot')({ slot: 0, mouseButton: 0, mode: 1 });
+  t.true(clickWindow.calledOnceWith(0, 0, 1));
 });
 
 test('close-current-window closes open window', async (t) => {

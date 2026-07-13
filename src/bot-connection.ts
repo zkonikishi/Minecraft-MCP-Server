@@ -83,9 +83,13 @@ export class BotConnection {
       this.callbacks.onLog('info', `Bot connected successfully. Username: ${this.config.username}, Server: ${this.config.host}:${this.config.port}`);
     });
 
-    bot.on('chat', (username, message) => {
-      if (username === bot.username) return;
-      this.callbacks.onChatMessage(username, message);
+    // `chat` only contains player chat and misses command/plugin/system replies.
+    // `messagestr` is the normalized Mineflayer stream for every visible message.
+    // Listen to only this event to avoid storing ordinary player chat twice.
+    bot.on('messagestr', (message, position) => {
+      const normalized = message.trim();
+      if (!normalized) return;
+      this.callbacks.onChatMessage(position || 'server', normalized);
     });
 
     bot.on('kicked', (reason) => {
@@ -180,7 +184,7 @@ export class BotConnection {
         `1. Minecraft server is running on ${this.config.host}:${this.config.port}\n` +
         `2. Server is accessible from this machine\n` +
         `3. Server version is compatible (latest supported: ${SUPPORTED_MINECRAFT_VERSION})\n\n` +
-        `For setup instructions, visit: https://github.com/yuniko-software/minecraft-mcp-server`;
+        `For setup instructions, visit: https://github.com/zkonikishi/minecraft-mcp-server`;
 
       return { connected: false, message: errorMessage };
     }

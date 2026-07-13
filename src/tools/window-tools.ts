@@ -28,6 +28,10 @@ type WindowBot = mineflayer.Bot & {
   ) => Promise<void>;
   closeWindow: (window: WindowLike) => void;
   moveSlotItem: (sourceSlot: number, destinationSlot: number) => Promise<void>;
+  simpleClick: {
+    leftMouse: (slot: number) => Promise<void>;
+    rightMouse: (slot: number) => Promise<void>;
+  };
 };
 
 function formatItem(item: Item | null, slot: number): string {
@@ -130,7 +134,14 @@ export function registerWindowTools(factory: ToolFactory, getBot: () => mineflay
         return factory.createResponse(`Slot ${slot} is outside this window (0-${bot.currentWindow.slots.length - 1})`);
       }
 
-      await bot.clickWindow(slot, mouseButton ?? 0, mode ?? 0);
+      const resolvedButton = mouseButton ?? 0;
+      const resolvedMode = mode ?? 0;
+      if (resolvedMode === 0) {
+        if (resolvedButton === 0) await bot.simpleClick.leftMouse(slot);
+        else await bot.simpleClick.rightMouse(slot);
+      } else {
+        await bot.clickWindow(slot, resolvedButton, resolvedMode);
+      }
       const item = bot.currentWindow.slots[slot] ?? null;
       return factory.createResponse(`Clicked slot ${slot}; now ${formatItem(item, slot)}`);
     }

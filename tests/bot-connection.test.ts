@@ -1,5 +1,7 @@
 import test from 'ava';
 import sinon from 'sinon';
+import { EventEmitter } from 'node:events';
+import type mineflayer from 'mineflayer';
 import { BotConnection } from '../src/bot-connection.js';
 
 test('constructor initializes with correct state', (t) => {
@@ -171,4 +173,22 @@ test('cleanup does not throw when no bot exists', (t) => {
   t.notThrows(() => {
     connection.cleanup();
   });
+});
+
+test('message stream captures plugin and command replies without chat-only listener', (t) => {
+  const config = { host: 'localhost', port: 25565, username: 'TestBot' };
+  const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
+  const connection = new BotConnection(config, callbacks);
+  const emitter = new EventEmitter() as unknown as mineflayer.Bot;
+  Object.assign(emitter, { username: 'TestBot' });
+
+  (connection as unknown as { registerEventHandlers: (bot: mineflayer.Bot) => void }).registerEventHandlers(emitter);
+  emitter.emit('messagestr', 'MythicReforge 0.1.0 | effective-safe-mode=true', 'system');
+  emitter.emit('messagestr', '   ', 'system');
+
+  t.true(callbacks.onChatMessage.calledOnceWith(
+    'system',
+    'MythicReforge 0.1.0 | effective-safe-mode=true'
+  ));
+  t.is(emitter.listenerCount('chat'), 0);
 });
