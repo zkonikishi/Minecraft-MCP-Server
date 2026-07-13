@@ -11,6 +11,9 @@ interface BotConfig {
   host: string;
   port: number;
   username: string;
+  version?: string;
+  auth: 'offline' | 'microsoft';
+  profilesFolder?: string;
 }
 
 interface ConnectionCallbacks {
@@ -54,6 +57,9 @@ export class BotConnection {
       host: this.config.host,
       port: this.config.port,
       username: this.config.username,
+      version: this.config.version,
+      auth: this.config.auth,
+      profilesFolder: this.config.profilesFolder,
       plugins: { pathfinder },
     };
 

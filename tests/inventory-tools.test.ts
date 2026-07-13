@@ -46,6 +46,26 @@ test('registerInventoryTools registers equip-item tool', (t) => {
   t.is(equipItemCall!.args[1], 'Equip a specific item');
 });
 
+test('registerInventoryTools registers interaction inventory tools', (t) => {
+  const mockServer = {
+    tool: sinon.stub()
+  } as unknown as McpServer;
+  const mockConnection = {
+    checkConnectionAndReconnect: sinon.stub().resolves({ connected: true })
+  } as unknown as BotConnection;
+  const factory = new ToolFactory(mockServer, mockConnection);
+  const mockBot = {} as Partial<mineflayer.Bot>;
+  const getBot = () => mockBot as mineflayer.Bot;
+
+  registerInventoryTools(factory, getBot);
+
+  const toolNames = (mockServer.tool as sinon.SinonStub).getCalls().map(call => call.args[0]);
+
+  t.true(toolNames.includes('set-quickbar-slot'));
+  t.true(toolNames.includes('drop-item'));
+  t.true(toolNames.includes('drop-selected-item'));
+});
+
 test('list-inventory returns empty when no items', async (t) => {
   const mockServer = {
     tool: sinon.stub()
@@ -163,4 +183,123 @@ test('equip-item returns message when item not found', async (t) => {
   const result = await executor({ itemName: 'diamond_sword', destination: 'hand' });
 
   t.true(result.content[0].text.includes('Couldn\'t find'));
+});
+
+test('set-quickbar-slot calls bot.setQuickBarSlot', async (t) => {
+  const mockServer = {
+    tool: sinon.stub()
+  } as unknown as McpServer;
+  const mockConnection = {
+    checkConnectionAndReconnect: sinon.stub().resolves({ connected: true })
+  } as unknown as BotConnection;
+  const factory = new ToolFactory(mockServer, mockConnection);
+
+  const setQuickBarSlotStub = sinon.stub();
+  const mockBot = {
+    setQuickBarSlot: setQuickBarSlotStub
+  } as unknown as mineflayer.Bot;
+  const getBot = () => mockBot;
+
+  registerInventoryTools(factory, getBot);
+
+  const toolCalls = (mockServer.tool as sinon.SinonStub).getCalls();
+  const setSlotCall = toolCalls.find(call => call.args[0] === 'set-quickbar-slot');
+  const executor = setSlotCall!.args[3];
+
+  const result = await executor({ slot: 2 });
+
+  t.true(setQuickBarSlotStub.calledOnceWith(2));
+  t.true(result.content[0].text.includes('Selected hotbar slot 2'));
+});
+
+test('drop-item drops the full matching stack', async (t) => {
+  const mockServer = {
+    tool: sinon.stub()
+  } as unknown as McpServer;
+  const mockConnection = {
+    checkConnectionAndReconnect: sinon.stub().resolves({ connected: true })
+  } as unknown as BotConnection;
+  const factory = new ToolFactory(mockServer, mockConnection);
+
+  const item = { name: 'iron_sword', type: 267, count: 1 };
+  const tossStackStub = sinon.stub().resolves();
+  const mockBot = {
+    inventory: {
+      items: () => [item]
+    },
+    tossStack: tossStackStub
+  } as unknown as mineflayer.Bot;
+  const getBot = () => mockBot;
+
+  registerInventoryTools(factory, getBot);
+
+  const toolCalls = (mockServer.tool as sinon.SinonStub).getCalls();
+  const dropItemCall = toolCalls.find(call => call.args[0] === 'drop-item');
+  const executor = dropItemCall!.args[3];
+
+  const result = await executor({ itemName: 'iron_sword' });
+
+  t.true(tossStackStub.calledOnceWith(item));
+  t.true(result.content[0].text.includes('Dropped 1 iron_sword'));
+});
+
+test('drop-item drops a partial matching stack', async (t) => {
+  const mockServer = {
+    tool: sinon.stub()
+  } as unknown as McpServer;
+  const mockConnection = {
+    checkConnectionAndReconnect: sinon.stub().resolves({ connected: true })
+  } as unknown as BotConnection;
+  const factory = new ToolFactory(mockServer, mockConnection);
+
+  const tossStub = sinon.stub().resolves();
+  const mockBot = {
+    inventory: {
+      items: () => [
+        { name: 'cobblestone', type: 4, count: 64 }
+      ]
+    },
+    toss: tossStub
+  } as unknown as mineflayer.Bot;
+  const getBot = () => mockBot;
+
+  registerInventoryTools(factory, getBot);
+
+  const toolCalls = (mockServer.tool as sinon.SinonStub).getCalls();
+  const dropItemCall = toolCalls.find(call => call.args[0] === 'drop-item');
+  const executor = dropItemCall!.args[3];
+
+  const result = await executor({ itemName: 'cobblestone', count: 3 });
+
+  t.true(tossStub.calledOnceWith(4, null, 3));
+  t.true(result.content[0].text.includes('Dropped 3 cobblestone'));
+});
+
+test('drop-selected-item drops the held item', async (t) => {
+  const mockServer = {
+    tool: sinon.stub()
+  } as unknown as McpServer;
+  const mockConnection = {
+    checkConnectionAndReconnect: sinon.stub().resolves({ connected: true })
+  } as unknown as BotConnection;
+  const factory = new ToolFactory(mockServer, mockConnection);
+
+  const heldItem = { name: 'diamond_sword', type: 276, count: 1 };
+  const tossStackStub = sinon.stub().resolves();
+  const mockBot = {
+    heldItem,
+    tossStack: tossStackStub
+  } as unknown as mineflayer.Bot;
+  const getBot = () => mockBot;
+
+  registerInventoryTools(factory, getBot);
+
+  const toolCalls = (mockServer.tool as sinon.SinonStub).getCalls();
+  const dropSelectedCall = toolCalls.find(call => call.args[0] === 'drop-selected-item');
+  const executor = dropSelectedCall!.args[3];
+
+  const result = await executor({});
+
+  t.true(tossStackStub.calledOnceWith(heldItem));
+  t.true(result.content[0].text.includes('Dropped 1 held diamond_sword'));
 });

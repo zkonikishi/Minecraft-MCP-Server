@@ -1,5 +1,6 @@
 export function setupStdioFiltering(): void {
   const originalStdoutWrite = process.stdout.write.bind(process.stdout);
+  const originalConsoleError = console.error.bind(console);
 
   process.stdout.write = function(chunk: string | Uint8Array, ...args: never[]): boolean {
     const message = chunk.toString();
@@ -9,5 +10,10 @@ export function setupStdioFiltering(): void {
     return true;
   } as typeof process.stdout.write;
 
-  console.error = function() { return; };
+  // Keep stdout reserved for MCP JSON-RPC, but preserve dependency messages
+  // (notably the Microsoft device-code login prompt) on stderr.
+  console.log = originalConsoleError;
+  console.info = originalConsoleError;
+  console.warn = originalConsoleError;
+  console.error = originalConsoleError;
 }

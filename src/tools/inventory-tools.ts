@@ -78,4 +78,77 @@ export function registerInventoryTools(factory: ToolFactory, getBot: () => minef
       return factory.createResponse(`Equipped ${item.name} to ${destination}`);
     }
   );
+
+  factory.registerTool(
+    "set-quickbar-slot",
+    "Switch the selected hotbar slot",
+    {
+      slot: z.number().int().min(0).max(8).describe("Hotbar slot index to select, from 0 to 8")
+    },
+    async ({ slot }) => {
+      const bot = getBot();
+      bot.setQuickBarSlot(slot);
+      return factory.createResponse(`Selected hotbar slot ${slot}`);
+    }
+  );
+
+  factory.registerTool(
+    "drop-item",
+    "Drop an item from the bot's inventory by name",
+    {
+      itemName: z.string().describe("Name of the item to drop"),
+      count: z.number().int().positive().optional().describe("Number of items to drop; defaults to the whole stack")
+    },
+    async ({ itemName, count }) => {
+      const bot = getBot();
+      const items = bot.inventory.items();
+      const item = items.find((item) =>
+        item.name.includes(itemName.toLowerCase())
+      );
+
+      if (!item) {
+        return factory.createResponse(`Couldn't find any item matching '${itemName}' in inventory`);
+      }
+
+      const dropCount = count ?? item.count;
+      if (dropCount > item.count) {
+        return factory.createResponse(`Cannot drop ${dropCount} ${item.name}; only ${item.count} available`);
+      }
+
+      if (dropCount === item.count) {
+        await bot.tossStack(item);
+      } else {
+        await bot.toss(item.type, null, dropCount);
+      }
+      return factory.createResponse(`Dropped ${dropCount} ${item.name}`);
+    }
+  );
+
+  factory.registerTool(
+    "drop-selected-item",
+    "Drop the item currently held in the bot's main hand",
+    {
+      count: z.number().int().positive().optional().describe("Number of held items to drop; defaults to the whole stack")
+    },
+    async ({ count }) => {
+      const bot = getBot();
+      const item = bot.heldItem;
+
+      if (!item) {
+        return factory.createResponse("No item is currently held");
+      }
+
+      const dropCount = count ?? item.count;
+      if (dropCount > item.count) {
+        return factory.createResponse(`Cannot drop ${dropCount} ${item.name}; only ${item.count} held`);
+      }
+
+      if (dropCount === item.count) {
+        await bot.tossStack(item);
+      } else {
+        await bot.toss(item.type, null, dropCount);
+      }
+      return factory.createResponse(`Dropped ${dropCount} held ${item.name}`);
+    }
+  );
 }

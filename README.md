@@ -1,48 +1,21 @@
 # Minecraft MCP Server
 
-<a href="https://github.com/yuniko-software/minecraft-mcp-server/actions">
-  <img alt="CI" src="https://github.com/yuniko-software/minecraft-mcp-server/actions/workflows/build.yml/badge.svg">
-</a>
-<a href="https://github.com/yuniko-software">
-  <img alt="Contribution Welcome" src="https://img.shields.io/badge/Contribution-Welcome-blue">
-</a>
-<a href="https://github.com/yuniko-software/minecraft-mcp-server/releases/latest">
-  <img alt="Latest Release" src="https://img.shields.io/github/v/release/yuniko-software/minecraft-mcp-server?label=Latest%20Release">
-</a>
+A Model Context Protocol (MCP) server that lets AI clients control a real Minecraft Java Edition player through [Mineflayer](https://github.com/PrismarineJS/mineflayer).
 
-<img width="2063" height="757" alt="image" src="https://github.com/user-attachments/assets/3f0f0438-f079-4226-90bd-87b9e1311d19" />
+This fork extends the original [`yuniko-software/minecraft-mcp-server`](https://github.com/yuniko-software/minecraft-mcp-server) with tools intended for repeatable Paper plugin testing: inventory and item metadata inspection, custom GUI interaction, container transfers, entity interaction, player-state diagnostics, and command-response waiting.
 
-___
+## Requirements
 
-> [!IMPORTANT]
-> Currently supports Minecraft version 1.21.11. Newer versions may not work with this MCP server, but we will add support as soon as possible.
+- Node.js 20.10 or newer
+- A reachable Minecraft Java Edition server
+- An MCP-compatible client such as Codex or Claude Desktop
+- An offline-mode test account, or a Microsoft account when `--auth microsoft` is used
 
-https://github.com/user-attachments/assets/6f17f329-3991-4bc7-badd-7cde9aacb92f
+The current codebase targets Minecraft protocol version `1.21.11`. You can explicitly select another Mineflayer-supported protocol with `--version`.
 
-A Minecraft bot powered by large language models and [Mineflayer API](https://github.com/PrismarineJS/mineflayer). This bot uses the [Model Context Protocol](https://github.com/modelcontextprotocol) (MCP) to enable Claude and other supported models to control a Minecraft character.
+## Quick start
 
-<a href="https://glama.ai/mcp/servers/@yuniko-software/minecraft-mcp-server">
-  <img width="380" height="200" src="https://glama.ai/mcp/servers/@yuniko-software/minecraft-mcp-server/badge" alt="mcp-minecraft MCP server" />
-</a>
-
-## Prerequisites
-
-- Git
-- Node.js (>= 20.10.0)
-- A running Minecraft game (the setup below was tested with Minecraft 1.21.8 Java Edition included in Microsoft Game Pass)
-- An MCP-compatible client. Claude Desktop will be used as an example, but other MCP clients are also supported
-
-## Getting started
-
-This bot is designed to be used with Claude Desktop through the Model Context Protocol (MCP).
-
-### Run Minecraft
-
-Create a singleplayer world and open it to LAN (`ESC -> Open to LAN`). Bot will try to connect using port `25565` and hostname `localhost`. These parameters could be configured in `claude_desktop_config.json` on a next step. 
-
-### MCP Configuration
-
-Make sure that [Claude Desktop](https://claude.ai/download) is installed. Open `File -> Settings -> Developer -> Edit Config`. It should open installation directory. Find file with a name `claude_desktop_config.json` and insert the following code:
+Add the server to your MCP client configuration:
 
 ```json
 {
@@ -51,83 +24,171 @@ Make sure that [Claude Desktop](https://claude.ai/download) is installed. Open `
       "command": "npx",
       "args": [
         "-y",
-        "github:yuniko-software/minecraft-mcp-server",
+        "github:zkonikishi/minecraft-mcp-server",
         "--host",
         "localhost",
         "--port",
         "25565",
         "--username",
-        "ClaudeBot"
+        "MCPBot",
+        "--auth",
+        "offline"
       ]
     }
   }
 }
 ```
 
-Double-check that right `--port` and `--host` parameters were used. Make sure to completely reboot the Claude Desktop application (should be closed in OS tray). 
+Restart the MCP client after changing its configuration. Restarting Minecraft is not required when only the MCP process has changed.
 
-## Running
+### Microsoft authentication
 
-Make sure Minecraft game is running and the world is opened to LAN. Then start Claude Desktop application and the bot should join the game. 
+For an online-mode server, use Microsoft authentication and a persistent token directory:
 
-**It could take some time for Claude Desktop to boot the MCP server**. The marker that the server has booted successfully:
+```json
+{
+  "mcpServers": {
+    "minecraft": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "github:zkonikishi/minecraft-mcp-server",
+        "--host",
+        "localhost",
+        "--port",
+        "25565",
+        "--username",
+        "MCPBot",
+        "--auth",
+        "microsoft",
+        "--profiles-folder",
+        "D:/MinecraftMcpProfiles"
+      ]
+    }
+  }
+}
+```
 
-<img width="885" height="670" alt="image" src="https://github.com/user-attachments/assets/ccbb42f8-6544-462c-8ac1-8af13ddfcddd" />
+Do not commit authentication caches or server credentials.
 
-You can give bot any commands through any active Claude Desktop chat. You can also upload images of buildings and ask bot to build them 😁
+## Command-line options
 
-Don't forget to mention that bot should do something in Minecraft in your prompt. Because saying this is a trigger to run MCP server. It will ask for your permissions.
+| Option | Default | Description |
+| --- | --- | --- |
+| `--host` | `localhost` | Minecraft server hostname or IP address |
+| `--port` | `25565` | Minecraft server port |
+| `--username` | `LLMBot` | Bot username |
+| `--version` | auto-detect | Minecraft protocol version |
+| `--auth` | `offline` | Authentication mode: `offline` or `microsoft` |
+| `--profiles-folder` | unset | Microsoft authentication token cache directory |
 
-Using Claude Sonnet could give you some interesting results. The bot-agent would be really smart 🫡
+## Available tools
 
-Example usage: [shared Claude chat](https://claude.ai/share/535d5f69-f102-4cdb-9801-f74ea5709c0b)
+### Movement and world interaction
 
-## Available Commands
+- `get-position` — read the bot position
+- `move-to-position` — pathfind to coordinates with timeout handling
+- `look-at` — look at coordinates
+- `jump` — jump once
+- `move-in-direction` — move in a direction for a duration
+- `fly-to` — fly to coordinates in a compatible game mode
+- `place-block` — place a block
+- `dig-block` — dig a block
+- `get-block-info` — inspect a block
+- `find-blocks` — find nearby blocks by type
 
-Once connected to a Minecraft server, Claude can use these commands:
+### Inventory and item verification
 
-### Movement
-- `get-position` - Get the current position of the bot
-- `move-to-position` - Move to specific coordinates
-- `look-at` - Make the bot look at specific coordinates
-- `jump` - Make the bot jump
-- `move-in-direction` - Move in a specific direction for a duration
+- `list-inventory` — list inventory stacks and slot indexes
+- `find-item` — find an inventory item by name
+- `equip-item` — equip an item to a supported equipment destination
+- `set-quickbar-slot` — select hotbar slot `0` through `8`
+- `drop-item` — drop all or part of a matching stack
+- `drop-selected-item` — drop the held stack or a specified amount
+- `pickup-nearest-item` — pathfind to and collect a dropped item
+- `inspect-item` — inspect display name, lore, NBT, data components, enchantments, and durability
+- `inspect-held-item` — inspect complete main-hand item metadata
+- `use-held-item` — activate a main-hand or offhand item for an optional number of ticks
 
-### Flight
-- `fly-to` - Make the bot fly directly to specific coordinates
+The inspection tools are suitable for verifying plugin-managed item identity and visible upgrade markers such as `+1` name prefixes without relying only on screenshots.
 
-### Inventory
-- `list-inventory` - List all items in the bot's inventory
-- `find-item` - Find a specific item in inventory
-- `equip-item` - Equip a specific item
+### Containers and custom GUIs
 
-### Block Interaction
-- `place-block` - Place a block at specified coordinates
-- `dig-block` - Dig a block at specified coordinates
-- `get-block-info` - Get information about a block
-- `find-blocks` - Find one or more nearby blocks of a specific type
+- `list-container` — list items in a container at world coordinates
+- `deposit-to-container` — deposit a matching item into a container
+- `withdraw-from-container` — withdraw a matching item from a container
+- `open-block-window` — open an interactive block GUI such as a chest, barrel, anvil, or grindstone
+- `list-current-window` — inspect the current window title, type, cursor stack, and slots
+- `click-window-slot` — perform a normal or right click with a Mineflayer click mode
+- `move-window-slot` — move a complete stack between two window slots
+- `quick-move-window-slot` — Shift-click a slot between the GUI and player inventory
+- `close-current-window` — close the current window
 
-### Furnace
-- `smelt-item` - Smelt items using a furnace-like block
+These generic window tools can also operate plugin-created inventory GUIs once the bot has opened them through an in-game command, item, NPC, or block interaction.
 
-### Entity Interaction
-- `find-entity` - Find the nearest entity of a specific type
+### Entities and diagnostics
 
-### Communication
-- `send-chat` - Send a chat message in-game
-- `read-chat` - Get recent chat messages from players
+- `find-entity` — find the nearest matching entity
+- `list-nearby-entities` — list nearby entity IDs, types, positions, and distances
+- `interact-entity` — attack, activate, or use the held item on an entity
+- `get-player-state` — read health, food, oxygen, experience, effects, game mode, position, and held item
+- `detect-gamemode` — read the current game mode
+- `wait-ticks` — wait a precise number of client ticks before the next assertion
 
-### Game State
-- `detect-gamemode` - Detect the gamemode on game
+### Chat and command automation
 
-## Contributing
+- `send-chat` — send chat or a slash command
+- `read-chat` — read recent messages captured by the MCP bot
+- `run-command-and-wait` — run a command and wait for a case-insensitive matching response, with timeout diagnostics
 
-Feel free to submit pull requests or open issues for improvements. All refactoring commits, functional and test contributions, issues and discussion are greatly appreciated!
+`run-command-and-wait` allows an AI test flow to distinguish success, missing permissions, missing currency, invalid equipment, and other plugin responses without requiring a player to copy messages manually.
 
-To get started with contributing, please see [CONTRIBUTING.md](CONTRIBUTING.md).
+### Crafting and furnaces
 
----
+- `list-recipes` — list recipes craftable from the current inventory
+- `get-recipe` — inspect a recipe
+- `can-craft` — check whether required ingredients are available
+- `craft-item` — craft an item
+- `smelt-item` — load and operate a furnace-like block
 
-⭐ If you find this project useful, please consider giving it a star on GitHub! ⭐
+## Example plugin test flow
 
-Your support helps make this project more visible to other people who might benefit from it.
+An automated equipment-upgrade test can:
+
+1. Run the plugin command that opens its GUI with `run-command-and-wait`.
+2. Inspect the GUI using `list-current-window`.
+3. Move equipment and materials using `move-window-slot` or `quick-move-window-slot`.
+4. Click the confirmation slot with `click-window-slot`.
+5. Wait for server processing using `wait-ticks`.
+6. Inspect the resulting item with `inspect-item`.
+7. Assert the name prefix, lore, NBT, components, material consumption, and command response.
+
+The bot must have the same permissions and resources that the test scenario requires. Grant elevated permissions only on isolated development servers.
+
+## Local development
+
+```bash
+npm install
+npm run build
+npm test
+npm run lint
+```
+
+Current validation baseline: TypeScript build succeeds, lint succeeds, and 145 automated tests pass.
+
+Run the built MCP server locally:
+
+```bash
+node dist/main.js --host localhost --port 25565 --username MCPBot --auth offline
+```
+
+## Safety notes
+
+- Use a dedicated bot account on development servers.
+- Back up worlds before destructive block or inventory tests.
+- Do not store RCON passwords, Microsoft tokens, or other secrets in scripts, logs, documentation, or Git.
+- Prefer full MCP process restarts after rebuilding. Avoid using Minecraft `/reload` as a plugin deployment mechanism.
+
+## License and attribution
+
+This project is based on [`yuniko-software/minecraft-mcp-server`](https://github.com/yuniko-software/minecraft-mcp-server) and uses Mineflayer and the Model Context Protocol SDK. See [LICENSE](LICENSE) for license terms and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance.

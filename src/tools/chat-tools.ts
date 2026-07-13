@@ -40,4 +40,35 @@ export function registerChatTools(factory: ToolFactory, getBot: () => mineflayer
       return factory.createResponse(output);
     }
   );
+
+  factory.registerTool(
+    "run-command-and-wait",
+    "Run a slash command as the bot and wait for a matching chat or command response",
+    {
+      command: z.string().min(1).describe("Command with or without a leading slash"),
+      match: z.string().optional().describe("Case-insensitive response substring; omit to collect all responses"),
+      timeoutMs: z.number().int().min(100).max(60000).optional().describe("Maximum wait, default 3000 ms")
+    },
+    async ({ command, match, timeoutMs = 3000 }) => {
+      const bot = getBot();
+      const started = Date.now();
+      bot.chat(command.startsWith("/") ? command : `/${command}`);
+      const deadline = started + timeoutMs;
+      const normalized = match?.toLowerCase();
+
+      while (Date.now() < deadline) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        const messages = messageStore.getMessagesSince(started);
+        if (normalized) {
+          const found = messages.find(message => message.content.toLowerCase().includes(normalized));
+          if (found) return factory.createResponse(`Matched response from ${found.username}: ${found.content}`);
+        } else if (messages.length > 0) {
+          return factory.createResponse(messages.map(message => `${message.username}: ${message.content}`).join("\n"));
+        }
+      }
+
+      const responses = messageStore.getMessagesSince(started);
+      return factory.createErrorResponse(`Timed out after ${timeoutMs}ms waiting for ${match ? `'${match}'` : "a command response"}${responses.length ? `; received: ${responses.map(message => message.content).join(" | ")}` : ""}`);
+    }
+  );
 }

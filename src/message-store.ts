@@ -1,4 +1,4 @@
-interface StoredMessage {
+export interface StoredMessage {
   timestamp: number;
   username: string;
   content: string;
@@ -33,5 +33,9 @@ export class MessageStore {
 
   getMaxMessages(): number {
     return this.maxMessages;
+  }
+
+  getMessagesSince(timestamp: number): StoredMessage[] {
+    return this.messages.filter(message => message.timestamp >= timestamp);
   }
 }
