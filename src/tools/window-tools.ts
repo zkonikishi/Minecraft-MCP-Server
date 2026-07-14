@@ -188,6 +188,12 @@ export function registerWindowTools(factory: ToolFactory, getBot: () => mineflay
       } else {
         await bot.clickWindow(slot, resolvedButton, resolvedMode);
       }
+      // A successful plugin-GUI action may synchronously close the window
+      // (for example, after committing an upgrade). Treat that as a valid
+      // click result instead of dereferencing Mineflayer's cleared window.
+      if (!bot.currentWindow) {
+        return factory.createResponse(`Clicked slot ${slot}; window closed by server`);
+      }
       const item = bot.currentWindow.slots[slot] ?? null;
       const cursor = bot.currentWindow.selectedItem;
       return factory.createResponse(`Clicked slot ${slot}; now ${formatItem(item, slot)}; cursor ${cursor ? `${cursor.name} x${cursor.count}` : "empty"}`);

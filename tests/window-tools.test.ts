@@ -240,6 +240,25 @@ test('click-window-slot preserves cursor for a real item pickup', async (t) => {
   t.is(window.selectedItem, item);
 });
 
+test('click-window-slot reports success when the server closes the GUI during the click', async (t) => {
+  const { mockServer, factory } = createFactory();
+  const window = { id: 17, type: 'custom', title: 'Commit GUI', slots: [{ name: 'lime_dye', count: 1 }], selectedItem: null };
+  const mockBot = {
+    currentWindow: window as typeof window | null,
+    clickWindow: sinon.stub().resolves(),
+    simpleClick: {
+      leftMouse: sinon.stub().callsFake(async () => { mockBot.currentWindow = null; }),
+      rightMouse: sinon.stub().resolves()
+    },
+    waitForTicks: sinon.stub().resolves()
+  } as unknown as mineflayer.Bot;
+  registerWindowTools(factory, () => mockBot);
+
+  const result = await toolExecutor(mockServer, 'click-window-slot')({ slot: 0, mouseButton: 0, mode: 0 });
+
+  t.true(result.content[0].text.includes('window closed by server'));
+});
+
 test('click-window-slot preserves raw Mineflayer modes for advanced clicks', async (t) => {
   const { mockServer, factory } = createFactory();
   const clickWindow = sinon.stub().resolves();
