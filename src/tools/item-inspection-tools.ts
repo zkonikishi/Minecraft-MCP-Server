@@ -3,7 +3,7 @@ import type { Bot } from "mineflayer";
 import type { Item } from "prismarine-item";
 import { ToolFactory } from "../tool-factory.js";
 
-function itemDetails(item: Item): string {
+export function itemDetails(item: Item): string {
   const value = item as Item & Record<string, unknown>;
   const payload = {
     name: item.name,

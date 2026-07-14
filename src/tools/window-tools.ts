@@ -4,6 +4,7 @@ import type { Item } from 'prismarine-item';
 import { Vec3 } from 'vec3';
 import { ToolFactory } from '../tool-factory.js';
 import { coerceCoordinates } from './coordinate-utils.js';
+import { itemDetails } from './item-inspection-tools.js';
 
 type WindowLike = {
   id: number;
@@ -118,6 +119,19 @@ export function registerWindowTools(factory: ToolFactory, getBot: () => mineflay
       }
 
       return factory.createResponse(formatWindow(window, includeEmpty ?? false));
+    }
+  );
+
+  factory.registerTool(
+    "inspect-window-slot",
+    "Inspect display name, lore, NBT, data components, enchantments, and durability for an item in the current window",
+    { slot: z.number().int().min(0).describe("Current window slot index") },
+    async ({ slot }) => {
+      const window = (getBot() as WindowBot).currentWindow;
+      if (!window) return factory.createResponse("No window is currently open");
+      if (slot >= window.slots.length) return factory.createResponse(`Slot ${slot} is outside this window (0-${window.slots.length - 1})`);
+      const item = window.slots[slot];
+      return factory.createResponse(item ? itemDetails(item) : `Window slot ${slot} is empty`);
     }
   );
 

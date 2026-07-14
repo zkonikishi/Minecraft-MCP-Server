@@ -119,6 +119,7 @@ The inspection tools are suitable for verifying plugin-managed item identity and
 - `withdraw-from-container` — withdraw a matching item from a container
 - `open-block-window` — open an interactive block GUI such as a chest, barrel, anvil, or grindstone
 - `list-current-window` — inspect the current window title, type, cursor stack, and slots
+- `inspect-window-slot` — inspect a GUI item's display name, lore, NBT, data components, enchantments, and durability
 - `click-window-slot` — perform a normal or right click with a Mineflayer click mode
 - `move-window-slot` — move a complete stack between two window slots
 - `quick-move-window-slot` — Shift-click a slot between the GUI and player inventory
@@ -174,7 +175,7 @@ npm test
 npm run lint
 ```
 
-Current validation baseline: TypeScript build succeeds, lint succeeds, and 149 automated tests pass.
+Current validation baseline: TypeScript build succeeds, lint succeeds, and 150 automated tests pass.
 
 Run the built MCP server locally:
 

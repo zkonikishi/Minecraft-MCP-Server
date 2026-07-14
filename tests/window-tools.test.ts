@@ -44,10 +44,27 @@ test('registerWindowTools registers all window tools', (t) => {
 
   t.true(toolNames.includes('open-block-window'));
   t.true(toolNames.includes('list-current-window'));
+  t.true(toolNames.includes('inspect-window-slot'));
   t.true(toolNames.includes('click-window-slot'));
   t.true(toolNames.includes('close-current-window'));
   t.true(toolNames.includes('move-window-slot'));
   t.true(toolNames.includes('quick-move-window-slot'));
+});
+
+test('inspect-window-slot returns plugin GUI item metadata', async (t) => {
+  const { mockServer, factory } = createFactory();
+  const mockBot = {
+    currentWindow: {
+      id: 16,
+      type: 'custom',
+      title: 'Reinforcement',
+      slots: [{ name: 'paper', displayName: '强化 0 → 1', count: 1, slot: 0, type: 1, metadata: 0, stackSize: 64, lore: ['成功率: 100%'] }]
+    }
+  } as unknown as mineflayer.Bot;
+  registerWindowTools(factory, () => mockBot);
+  const result = await toolExecutor(mockServer, 'inspect-window-slot')({ slot: 0 });
+  t.true(result.content[0].text.includes('强化 0 → 1'));
+  t.true(result.content[0].text.includes('成功率: 100%'));
 });
 
 test('move-window-slot moves a stack between GUI slots', async (t) => {

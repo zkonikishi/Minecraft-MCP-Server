@@ -12,6 +12,7 @@ export interface ServerConfig {
 
 export function parseConfig(): ServerConfig {
   return yargs(hideBin(process.argv))
+    .version(false)
     .option('host', {
       type: 'string',
       description: 'Minecraft server host',
