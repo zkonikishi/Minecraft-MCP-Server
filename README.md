@@ -174,7 +174,7 @@ npm test
 npm run lint
 ```
 
-Current validation baseline: TypeScript build succeeds, lint succeeds, and 147 automated tests pass.
+Current validation baseline: TypeScript build succeeds, lint succeeds, and 149 automated tests pass.
 
 Run the built MCP server locally:
 

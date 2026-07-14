@@ -39,6 +39,11 @@ function formatItem(item: Item | null, slot: number): string {
   return `- slot ${slot}: ${item.name} x${item.count}`;
 }
 
+function sameStack(left: Item | null | undefined, right: Item | null | undefined): boolean {
+  if (!left || !right) return left == null && right == null;
+  return left.name === right.name && left.count === right.count && left.metadata === right.metadata;
+}
+
 function formatWindow(window: WindowLike, includeEmpty: boolean): string {
   const title = typeof window.title === "string" ? window.title : JSON.stringify(window.title ?? "");
   const lines = [
@@ -136,14 +141,29 @@ export function registerWindowTools(factory: ToolFactory, getBot: () => mineflay
 
       const resolvedButton = mouseButton ?? 0;
       const resolvedMode = mode ?? 0;
+      const beforeSlot = bot.currentWindow.slots[slot] ?? null;
+      const beforeCursor = bot.currentWindow.selectedItem ?? null;
       if (resolvedMode === 0) {
         if (resolvedButton === 0) await bot.simpleClick.leftMouse(slot);
         else await bot.simpleClick.rightMouse(slot);
+        await bot.waitForTicks(2);
+
+        // Mineflayer 4.35 ignores the modern cursor correction packet
+        // (set_slot window=-1 slot=-1). When a Paper GUI cancels a click,
+        // the server restores the source slot but Mineflayer keeps its local
+        // predicted cursor stack. Reconcile only this cancelled-click shape;
+        // a real item pickup leaves the source slot changed and is preserved.
+        const restoredSlot = bot.currentWindow?.slots[slot] ?? null;
+        const predictedCursor = bot.currentWindow?.selectedItem ?? null;
+        if (!beforeCursor && sameStack(restoredSlot, beforeSlot) && sameStack(predictedCursor, beforeSlot) && bot.currentWindow) {
+          bot.currentWindow.selectedItem = null;
+        }
       } else {
         await bot.clickWindow(slot, resolvedButton, resolvedMode);
       }
       const item = bot.currentWindow.slots[slot] ?? null;
-      return factory.createResponse(`Clicked slot ${slot}; now ${formatItem(item, slot)}`);
+      const cursor = bot.currentWindow.selectedItem;
+      return factory.createResponse(`Clicked slot ${slot}; now ${formatItem(item, slot)}; cursor ${cursor ? `${cursor.name} x${cursor.count}` : "empty"}`);
     }
   );
 

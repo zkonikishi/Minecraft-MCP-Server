@@ -154,7 +154,8 @@ test('click-window-slot clicks selected slot', async (t) => {
       ]
     },
     clickWindow: clickWindowStub,
-    simpleClick: { leftMouse: sinon.stub().resolves(), rightMouse }
+    simpleClick: { leftMouse: sinon.stub().resolves(), rightMouse },
+    waitForTicks: sinon.stub().resolves()
   } as unknown as mineflayer.Bot;
   const getBot = () => mockBot;
 
@@ -166,6 +167,39 @@ test('click-window-slot clicks selected slot', async (t) => {
   t.true(rightMouse.calledOnceWith(0));
   t.false(clickWindowStub.called);
   t.true(result.content[0].text.includes('Clicked slot 0'));
+});
+
+test('click-window-slot clears Mineflayer predicted cursor when Paper restores a cancelled GUI click', async (t) => {
+  const { mockServer, factory } = createFactory();
+  const icon = { name: 'enchanted_book', count: 1, metadata: 0 };
+  const window = { id: 14, type: 'custom', title: 'Plugin GUI', slots: [icon], selectedItem: null as typeof icon | null };
+  const leftMouse = sinon.stub().callsFake(async () => { window.selectedItem = icon; });
+  const mockBot = {
+    currentWindow: window,
+    clickWindow: sinon.stub().resolves(),
+    simpleClick: { leftMouse, rightMouse: sinon.stub().resolves() },
+    waitForTicks: sinon.stub().resolves()
+  } as unknown as mineflayer.Bot;
+  registerWindowTools(factory, () => mockBot);
+  const result = await toolExecutor(mockServer, 'click-window-slot')({ slot: 0, mouseButton: 0, mode: 0 });
+  t.is(window.selectedItem, null);
+  t.true(result.content[0].text.includes('cursor empty'));
+});
+
+test('click-window-slot preserves cursor for a real item pickup', async (t) => {
+  const { mockServer, factory } = createFactory();
+  const item = { name: 'iron_sword', count: 1, metadata: 0 };
+  const window = { id: 15, type: 'custom', title: 'Container', slots: [item as typeof item | null], selectedItem: null as typeof item | null };
+  const leftMouse = sinon.stub().callsFake(async () => { window.slots[0] = null; window.selectedItem = item; });
+  const mockBot = {
+    currentWindow: window,
+    clickWindow: sinon.stub().resolves(),
+    simpleClick: { leftMouse, rightMouse: sinon.stub().resolves() },
+    waitForTicks: sinon.stub().resolves()
+  } as unknown as mineflayer.Bot;
+  registerWindowTools(factory, () => mockBot);
+  await toolExecutor(mockServer, 'click-window-slot')({ slot: 0, mouseButton: 0, mode: 0 });
+  t.is(window.selectedItem, item);
 });
 
 test('click-window-slot preserves raw Mineflayer modes for advanced clicks', async (t) => {
