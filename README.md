@@ -126,6 +126,7 @@ The inspection tools are suitable for verifying plugin-managed item identity and
 - `close-current-window` — close the current window
 
 These generic window tools can also operate plugin-created inventory GUIs once the bot has opened them through an in-game command, item, NPC, or block interaction.
+For cancelled Paper plugin GUI clicks, `click-window-slot` briefly waits for the server-restored slot before clearing Mineflayer's predicted cursor stack, so rejected button clicks do not leave a false cursor item in MCP state.
 
 ### Entities and diagnostics
 
@@ -175,7 +176,7 @@ npm test
 npm run lint
 ```
 
-Current validation baseline: TypeScript build succeeds, lint succeeds, and 150 automated tests pass.
+Current validation baseline: TypeScript build succeeds, lint succeeds, and 151 automated tests pass.
 
 Run the built MCP server locally:
 

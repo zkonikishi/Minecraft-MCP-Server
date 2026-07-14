@@ -45,6 +45,11 @@ function sameStack(left: Item | null | undefined, right: Item | null | undefined
   return left.name === right.name && left.count === right.count && left.metadata === right.metadata;
 }
 
+function sameItemKind(left: Item | null | undefined, right: Item | null | undefined): boolean {
+  if (!left || !right) return false;
+  return left.name === right.name && left.metadata === right.metadata;
+}
+
 function formatWindow(window: WindowLike, includeEmpty: boolean): string {
   const title = typeof window.title === "string" ? window.title : JSON.stringify(window.title ?? "");
   const lines = [
@@ -160,17 +165,25 @@ export function registerWindowTools(factory: ToolFactory, getBot: () => mineflay
       if (resolvedMode === 0) {
         if (resolvedButton === 0) await bot.simpleClick.leftMouse(slot);
         else await bot.simpleClick.rightMouse(slot);
-        await bot.waitForTicks(2);
-
         // Mineflayer 4.35 ignores the modern cursor correction packet
         // (set_slot window=-1 slot=-1). When a Paper GUI cancels a click,
         // the server restores the source slot but Mineflayer keeps its local
         // predicted cursor stack. Reconcile only this cancelled-click shape;
         // a real item pickup leaves the source slot changed and is preserved.
-        const restoredSlot = bot.currentWindow?.slots[slot] ?? null;
-        const predictedCursor = bot.currentWindow?.selectedItem ?? null;
-        if (!beforeCursor && sameStack(restoredSlot, beforeSlot) && sameStack(predictedCursor, beforeSlot) && bot.currentWindow) {
-          bot.currentWindow.selectedItem = null;
+        // Paper plugins may rebuild the button several ticks after the event,
+        // so poll briefly instead of assuming the correction arrives in 2 ticks.
+        if (!beforeCursor && beforeSlot) {
+          for (let attempt = 0; attempt < 10 && bot.currentWindow; attempt += 1) {
+            const restoredSlot = bot.currentWindow.slots[slot] ?? null;
+            const predictedCursor = bot.currentWindow.selectedItem ?? null;
+            if (!predictedCursor) break;
+            if (!sameItemKind(predictedCursor, beforeSlot)) break;
+            if (sameStack(restoredSlot, beforeSlot)) {
+              bot.currentWindow.selectedItem = null;
+              break;
+            }
+            await bot.waitForTicks(1);
+          }
         }
       } else {
         await bot.clickWindow(slot, resolvedButton, resolvedMode);

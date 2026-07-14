@@ -203,6 +203,27 @@ test('click-window-slot clears Mineflayer predicted cursor when Paper restores a
   t.true(result.content[0].text.includes('cursor empty'));
 });
 
+test('click-window-slot waits for a delayed Paper GUI slot restoration', async (t) => {
+  const { mockServer, factory } = createFactory();
+  const icon = { name: 'lime_dye', count: 1, metadata: 0 };
+  const window = { id: 16, type: 'custom', title: 'Plugin GUI', slots: [icon as typeof icon | null], selectedItem: null as typeof icon | null };
+  const leftMouse = sinon.stub().callsFake(async () => { window.slots[0] = null; window.selectedItem = icon; });
+  const waitForTicks = sinon.stub().callsFake(async () => {
+    if (waitForTicks.callCount === 3) window.slots[0] = icon;
+  });
+  const mockBot = {
+    currentWindow: window,
+    clickWindow: sinon.stub().resolves(),
+    simpleClick: { leftMouse, rightMouse: sinon.stub().resolves() },
+    waitForTicks
+  } as unknown as mineflayer.Bot;
+  registerWindowTools(factory, () => mockBot);
+  const result = await toolExecutor(mockServer, 'click-window-slot')({ slot: 0, mouseButton: 0, mode: 0 });
+  t.is(waitForTicks.callCount, 3);
+  t.is(window.selectedItem, null);
+  t.true(result.content[0].text.includes('cursor empty'));
+});
+
 test('click-window-slot preserves cursor for a real item pickup', async (t) => {
   const { mockServer, factory } = createFactory();
   const item = { name: 'iron_sword', count: 1, metadata: 0 };
