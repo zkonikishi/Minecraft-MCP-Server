@@ -139,7 +139,7 @@ These generic window tools can also operate plugin-created inventory GUIs once t
 ### Chat and command automation
 
 - `send-chat` — send chat or a slash command
-- `read-chat` — read recent player, plugin, command, and system messages captured by the MCP bot
+- `read-chat` — read recent player, plugin, command, and system messages while excluding high-frequency ActionBar/HUD noise
 - `run-command-and-wait` — run a command and wait for a case-insensitive matching response, with timeout diagnostics
 
 `run-command-and-wait` allows an AI test flow to distinguish success, missing permissions, missing currency, invalid equipment, and other plugin responses without requiring a player to copy messages manually.

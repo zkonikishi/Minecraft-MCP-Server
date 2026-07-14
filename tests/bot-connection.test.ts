@@ -184,6 +184,7 @@ test('message stream captures plugin and command replies without chat-only liste
 
   (connection as unknown as { registerEventHandlers: (bot: mineflayer.Bot) => void }).registerEventHandlers(emitter);
   emitter.emit('messagestr', 'MythicReforge 0.1.0 | effective-safe-mode=true', 'system');
+  emitter.emit('messagestr', '[ 23°C ]', 'game_info');
   emitter.emit('messagestr', '   ', 'system');
 
   t.true(callbacks.onChatMessage.calledOnceWith(

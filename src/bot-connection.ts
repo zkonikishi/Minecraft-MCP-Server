@@ -87,6 +87,9 @@ export class BotConnection {
     // `messagestr` is the normalized Mineflayer stream for every visible message.
     // Listen to only this event to avoid storing ordinary player chat twice.
     bot.on('messagestr', (message, position) => {
+      // ActionBar/HUD updates (weather, temperature, mana bars, etc.) can
+      // arrive several times per second and evict useful plugin responses.
+      if (position === 'game_info') return;
       const normalized = message.trim();
       if (!normalized) return;
       this.callbacks.onChatMessage(position || 'server', normalized);
