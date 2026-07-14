@@ -182,7 +182,15 @@ export function registerWindowTools(factory: ToolFactory, getBot: () => mineflay
               bot.currentWindow.selectedItem = null;
               break;
             }
-            await bot.waitForTicks(1);
+            try {
+              await bot.waitForTicks(1);
+            } catch {
+              // A server-side GUI close can stop Mineflayer's tick waiter
+              // before its window-close packet is reflected locally. The
+              // click already completed, so do not replace that result with
+              // a diagnostic tick timeout.
+              break;
+            }
           }
         }
       } else {

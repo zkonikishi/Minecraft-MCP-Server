@@ -259,6 +259,23 @@ test('click-window-slot reports success when the server closes the GUI during th
   t.true(result.content[0].text.includes('window closed by server'));
 });
 
+test('click-window-slot does not fail when reconciliation tick waiting times out after a click', async (t) => {
+  const { mockServer, factory } = createFactory();
+  const icon = { name: 'lime_dye', count: 1, metadata: 0 };
+  const window = { id: 18, type: 'custom', title: 'Commit GUI', slots: [icon as typeof icon | null], selectedItem: null as typeof icon | null };
+  const mockBot = {
+    currentWindow: window,
+    clickWindow: sinon.stub().resolves(),
+    simpleClick: { leftMouse: sinon.stub().callsFake(async () => { window.slots[0] = null; window.selectedItem = icon; }), rightMouse: sinon.stub().resolves() },
+    waitForTicks: sinon.stub().rejects(new Error('Timeout waiting for 1 ticks'))
+  } as unknown as mineflayer.Bot;
+  registerWindowTools(factory, () => mockBot);
+
+  const result = await toolExecutor(mockServer, 'click-window-slot')({ slot: 0, mouseButton: 0, mode: 0 });
+
+  t.true(result.content[0].text.includes('Clicked slot 0'));
+});
+
 test('click-window-slot preserves raw Mineflayer modes for advanced clicks', async (t) => {
   const { mockServer, factory } = createFactory();
   const clickWindow = sinon.stub().resolves();
