@@ -186,3 +186,24 @@ test('read-chat limits count to max messages', async (t) => {
 
   t.true(result.content[0].text.includes('10 chat message'));
 });
+
+test('run-command-and-wait collects a complete multiline response', async (t) => {
+  const mockServer = { tool: sinon.stub() } as unknown as McpServer;
+  const mockConnection = {
+    checkConnectionAndReconnect: sinon.stub().resolves({ connected: true })
+  } as unknown as BotConnection;
+  const factory = new ToolFactory(mockServer, mockConnection);
+  const mockBot = { chat: sinon.stub() } as Partial<mineflayer.Bot>;
+  const messageStore = new MessageStore();
+  registerChatTools(factory, () => mockBot as mineflayer.Bot, messageStore);
+
+  const call = (mockServer.tool as sinon.SinonStub).getCalls().find(entry => entry.args[0] === 'run-command-and-wait');
+  const executor = call!.args[3];
+  setTimeout(() => messageStore.addMessage('server', 'status line one'), 20);
+  setTimeout(() => messageStore.addMessage('server', 'status line two'), 100);
+
+  const result = await executor({ command: '/zapptest status', timeoutMs: 1000 });
+  t.true((mockBot.chat as sinon.SinonStub).calledOnceWith('/zapptest status'));
+  t.true(result.content[0].text.includes('status line one'));
+  t.true(result.content[0].text.includes('status line two'));
+});

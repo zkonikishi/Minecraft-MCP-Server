@@ -55,14 +55,25 @@ export function registerChatTools(factory: ToolFactory, getBot: () => mineflayer
       bot.chat(command.startsWith("/") ? command : `/${command}`);
       const deadline = started + timeoutMs;
       const normalized = match?.toLowerCase();
+      let lastMessageCount = 0;
+      let quietSince: number | null = null;
+      const settleMs = 250;
 
       while (Date.now() < deadline) {
         await new Promise(resolve => setTimeout(resolve, 50));
         const messages = messageStore.getMessagesSince(started);
-        if (normalized) {
-          const found = messages.find(message => message.content.toLowerCase().includes(normalized));
-          if (found) return factory.createResponse(`Matched response from ${found.username}: ${found.content}`);
-        } else if (messages.length > 0) {
+        const hasMatch = !normalized || messages.some(message => message.content.toLowerCase().includes(normalized));
+
+        if (messages.length !== lastMessageCount) {
+          lastMessageCount = messages.length;
+          quietSince = hasMatch ? Date.now() : null;
+        } else if (messages.length > 0 && hasMatch && quietSince === null) {
+          quietSince = Date.now();
+        }
+
+        // Plugin commands commonly emit several lines in separate packets. Wait
+        // for a short quiet period so callers receive the complete response.
+        if (quietSince !== null && Date.now() - quietSince >= settleMs) {
           return factory.createResponse(messages.map(message => `${message.username}: ${message.content}`).join("\n"));
         }
       }

@@ -11,7 +11,15 @@ This fork extends the original [`yuniko-software/minecraft-mcp-server`](https://
 - An MCP-compatible client such as Codex or Claude Desktop
 - An offline-mode test account, or a Microsoft account when `--auth microsoft` is used
 
-The current codebase targets Minecraft protocol version `1.21.11`. You can explicitly select another Mineflayer-supported protocol with `--version`.
+The current codebase targets Minecraft protocol version `26.2` (protocol 776). You can explicitly select another Mineflayer-supported protocol with `--version`.
+
+### Paper 26.2 offline integration tests
+
+When testing against an offline-mode Paper server with ModelEngine installed, set
+`Eager-Generate-Skins=false`. Offline test identities do not have a Mojang skin URL,
+and ModelEngine otherwise throws `RuntimeException: Skin URL is null` during join.
+Alternatively, use a test account with valid skin profile data. This is a server
+plugin constraint, not a Mineflayer/MCP protocol failure.
 
 ## Quick start
 
