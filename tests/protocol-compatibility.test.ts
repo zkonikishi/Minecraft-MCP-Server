@@ -1,6 +1,6 @@
 import test from 'ava';
 import minecraftData from 'minecraft-data';
-import { applyProtocolCompatibility, getSupportedMinecraftVersions, NATIVE_PROTOCOL_TARGET_VERSION, NATIVE_PROTOCOL_FALLBACK_VERSION } from '../src/protocol-compatibility.js';
+import { applyProtocolCompatibility, getSupportedMinecraftVersions, NATIVE_PROTOCOL_TARGET_VERSION } from '../src/protocol-compatibility.js';
 
 test('getSupportedMinecraftVersions includes 26.2 compatibility target', (t) => {
   const modules = {
@@ -16,6 +16,12 @@ test('getSupportedMinecraftVersions includes 26.2 compatibility target', (t) => 
             version: 774,
             dataVersion: 4671,
             majorVersion: '1.21'
+          },
+          [NATIVE_PROTOCOL_TARGET_VERSION]: {
+            minecraftVersion: NATIVE_PROTOCOL_TARGET_VERSION,
+            version: 776,
+            dataVersion: 4903,
+            majorVersion: NATIVE_PROTOCOL_TARGET_VERSION
           }
         }
       },
@@ -31,12 +37,14 @@ test('getSupportedMinecraftVersions includes 26.2 compatibility target', (t) => 
       },
       data: {
         pc: {
-          '1.21.11': { blocks: {} }
+          '1.21.11': { blocks: {} },
+          [NATIVE_PROTOCOL_TARGET_VERSION]: { blocks: {} }
         }
       },
       registry: {
         pc: {
-          '1.21.11': { blocks: {} }
+          '1.21.11': { blocks: {} },
+          [NATIVE_PROTOCOL_TARGET_VERSION]: { blocks: {} }
         }
       },
       supportedVersions: {
@@ -73,11 +81,30 @@ test('getSupportedMinecraftVersions includes 26.2 compatibility target', (t) => 
   const supportedVersions = getSupportedMinecraftVersions(modules);
 
   t.true(supportedVersions.includes(NATIVE_PROTOCOL_TARGET_VERSION));
-  t.true(supportedVersions.includes(NATIVE_PROTOCOL_FALLBACK_VERSION));
+  t.true(supportedVersions.includes('1.21.11'));
   t.is(supportedVersions.filter((version) => version === NATIVE_PROTOCOL_TARGET_VERSION).length, 1);
   t.true(Object.prototype.hasOwnProperty.call(modules.minecraftData.registry.pc, NATIVE_PROTOCOL_TARGET_VERSION));
   t.true(modules.mineflayerVersion.latestSupportedVersion === NATIVE_PROTOCOL_TARGET_VERSION);
   t.true(modules.minecraftData.supportedVersions.pc.includes(NATIVE_PROTOCOL_TARGET_VERSION));
+});
+
+test('compatibility refuses to alias 26.2 to an older registry', (t) => {
+  const modules = {
+    mineflayerVersion: { testedVersions: ['1.21.11'], latestSupportedVersion: '1.21.11' },
+    minecraftData: {
+      versionsByMinecraftVersion: { pc: {} },
+      versions: { pc: [] },
+      data: { pc: {} },
+      registry: { pc: { '1.21.11': { blocks: {} } } },
+      supportedVersions: { pc: ['1.21.11'] },
+      postNettyVersionsByProtocolVersion: { pc: {} }
+    },
+    minecraftProtocol: { supportedVersions: ['1.21.11'] }
+  };
+
+  const error = t.throws(() => applyProtocolCompatibility({ modules }));
+  t.regex(error.message, /protocol 776/);
+  t.false(Object.prototype.hasOwnProperty.call(modules.minecraftData.registry.pc, NATIVE_PROTOCOL_TARGET_VERSION));
 });
 
 test('applying compatibility does not duplicate protocol lists', (t) => {

@@ -3,7 +3,6 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 
 export const NATIVE_PROTOCOL_TARGET_VERSION = '26.2';
-export const NATIVE_PROTOCOL_FALLBACK_VERSION = '1.21.11';
 
 interface MineflayerVersionModule {
   testedVersions: string[];
@@ -53,7 +52,6 @@ interface ProtocolCompatibilityModules {
 
 interface ApplyProtocolCompatibilityOptions {
   targetVersion?: string;
-  fallbackVersion?: string;
   modules?: Partial<ProtocolCompatibilityModules>;
 }
 
@@ -81,31 +79,14 @@ function applyMineflayerCompatibility(modules: ProtocolCompatibilityModules, tar
   mineflayerVersion.latestSupportedVersion = targetVersion;
 }
 
-function applyMinecraftDataCompatibility(modules: ProtocolCompatibilityModules, targetVersion: string, fallbackVersion: string): void {
+function assertNativeMinecraftData(modules: ProtocolCompatibilityModules, targetVersion: string): void {
   const { minecraftData } = modules;
-  const byVersion = minecraftData.versionsByMinecraftVersion.pc;
-  const dataByVersion = minecraftData.registry.pc;
-  let targetVersionData = byVersion[targetVersion];
-  const fallbackVersionData = minecraftData.versionsByMinecraftVersion.pc[fallbackVersion];
-
-  if (!targetVersionData && fallbackVersionData) {
-    targetVersionData = byVersion[targetVersion] = {
-      ...fallbackVersionData,
-      minecraftVersion: targetVersion
-    };
+  const metadata = minecraftData.versionsByMinecraftVersion.pc[targetVersion];
+  const registry = minecraftData.registry.pc[targetVersion];
+  if (!metadata || !registry || metadata.version !== 776) {
+    throw new Error(`Native minecraft-data for ${targetVersion} (protocol 776) is not installed`);
   }
-
-  if (!dataByVersion[targetVersion] && dataByVersion[fallbackVersion]) {
-    dataByVersion[targetVersion] = dataByVersion[fallbackVersion];
-  }
-
   ensureArrayItem(minecraftData.supportedVersions.pc, targetVersion);
-
-  const versionsArray = minecraftData.versions.pc;
-  const hasVersionInList = versionsArray.some((entry) => entry.minecraftVersion === targetVersion);
-  if (!hasVersionInList && targetVersionData) {
-    versionsArray.push(targetVersionData);
-  }
 }
 
 function applyMinecraftProtocolCompatibility(modules: ProtocolCompatibilityModules, targetVersion: string): void {
@@ -120,7 +101,6 @@ function applyMinecraftProtocolCompatibility(modules: ProtocolCompatibilityModul
 
 export function applyProtocolCompatibility(options: ApplyProtocolCompatibilityOptions = {}): void {
   const targetVersion = options.targetVersion ?? NATIVE_PROTOCOL_TARGET_VERSION;
-  const fallbackVersion = options.fallbackVersion ?? NATIVE_PROTOCOL_FALLBACK_VERSION;
   const modules: ProtocolCompatibilityModules = {
     mineflayerVersion: options.modules?.mineflayerVersion ?? compatibilityModules.mineflayerVersion,
     minecraftData: options.modules?.minecraftData ?? compatibilityModules.minecraftData,
@@ -132,7 +112,7 @@ export function applyProtocolCompatibility(options: ApplyProtocolCompatibilityOp
   }
 
   applyMineflayerCompatibility(modules, targetVersion);
-  applyMinecraftDataCompatibility(modules, targetVersion, fallbackVersion);
+  assertNativeMinecraftData(modules, targetVersion);
   applyMinecraftProtocolCompatibility(modules, targetVersion);
 
   if (options.modules === undefined) {
