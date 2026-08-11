@@ -11,6 +11,8 @@ import { coerceCoordinates } from './coordinate-utils.js';
 type FaceDirection = 'up' | 'down' | 'north' | 'south' | 'east' | 'west';
 const MAX_FIND_BLOCKS_COUNT = 256;
 
+type BotVec3 = Parameters<mineflayer.Bot['blockAt']>[0];
+
 interface FaceOption {
   direction: string;
   vector: Vec3;
@@ -30,7 +32,7 @@ export function registerBlockTools(factory: ToolFactory, getBot: () => mineflaye
       ({ x, y, z } = coerceCoordinates(x, y, z));
 
       const bot = getBot();
-      const placePos = new Vec3(x, y, z).floored();
+      const placePos = new Vec3(x, y, z).floored() as BotVec3;
       ({ x, y, z } = placePos);
 
       const botPos = bot.entity.position.floored();
@@ -98,7 +100,7 @@ export function registerBlockTools(factory: ToolFactory, getBot: () => mineflaye
       ({ x, y, z } = coerceCoordinates(x, y, z));
 
       const bot = getBot();
-      const blockPos = new Vec3(x, y, z);
+      const blockPos = new Vec3(x, y, z) as BotVec3;
       const block = bot.blockAt(blockPos);
 
       if (!block || block.name === 'air') {
@@ -127,7 +129,7 @@ export function registerBlockTools(factory: ToolFactory, getBot: () => mineflaye
       ({ x, y, z } = coerceCoordinates(x, y, z));
 
       const bot = getBot();
-      const blockPos = new Vec3(x, y, z);
+      const blockPos = new Vec3(x, y, z) as BotVec3;
       const block = bot.blockAt(blockPos);
 
       if (!block) {

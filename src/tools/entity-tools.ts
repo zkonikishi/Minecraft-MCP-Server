@@ -81,9 +81,9 @@ export function registerEntityTools(factory: ToolFactory, getBot: () => Bot): vo
         if (timedOut) {
           bot.pathfinder.stop();
           gotoPromise.catch(() => {});
-          throw new Error(`Pickup movement timed out after ${timeoutMs}ms`);
+          throw new Error(`Pickup movement timed out after ${timeoutMs}ms`, { cause: error });
         }
-        throw error;
+        throw new Error('Failed to complete item pickup movement', { cause: error });
       } finally {
         if (timeoutId) clearTimeout(timeoutId);
       }

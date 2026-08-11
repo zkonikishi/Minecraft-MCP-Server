@@ -64,9 +64,9 @@ export function registerPositionTools(factory: ToolFactory, getBot: () => minefl
         return factory.createResponse(`Successfully moved to position near (${x}, ${y}, ${z})`);
       } catch (error) {
         if (timedOut) {
-          throw new Error(`Move timed out after ${timeoutMs}ms`);
+          throw new Error(`Move timed out after ${timeoutMs}ms`, { cause: error });
         }
-        throw error;
+        throw new Error('Failed to execute move-to-position', { cause: error });
       } finally {
         if (timeoutId) {
           clearTimeout(timeoutId);

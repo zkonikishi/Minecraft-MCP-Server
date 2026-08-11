@@ -105,7 +105,7 @@ test('move-to-position returns error when pathfinding fails', async (t) => {
   const result = await executor({ x: 100, y: 64, z: 200 });
 
   t.true(result.isError);
-  t.true(result.content[0].text.includes('Cannot find path'));
+  t.true(result.content[0].text.includes('Failed to execute move-to-position'));
 });
 
 test.serial('move-to-position returns timeout error and stops pathfinder', async (t) => {
@@ -233,6 +233,6 @@ test('move-to-position preserves pathfinder error when not timing out', async (t
   const result = await executor({ x: 100, y: 64, z: 200, timeoutMs: 5000 });
 
   t.true(result.isError);
-  t.true(result.content[0].text.includes('Path was stopped before it could be completed'));
+  t.true(result.content[0].text.includes('Failed to execute move-to-position'));
   t.true((mockBot.pathfinder!.stop as sinon.SinonStub).notCalled);
 });
