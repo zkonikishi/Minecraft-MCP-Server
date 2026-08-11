@@ -11,6 +11,15 @@ function getLatestSupportedMinecraftVersion(): string {
 
 type ConnectionState = 'connected' | 'connecting' | 'disconnected';
 
+type MineflayerPluginOptions = Record<string, mineflayer.Plugin | false>;
+
+export function getVersionSpecificPlugins(version?: string): MineflayerPluginOptions {
+  // Minecraft 26.2 reshaped the teams packet. Mineflayer 4.37 still passes the
+  // old field names to prismarine-chat, which crashes while parsing displayName.
+  // Keep the plugin enabled for every older supported protocol.
+  return version === '26.2' ? { pathfinder, team: false } : { pathfinder };
+}
+
 interface BotConfig {
   host: string;
   port: number;
@@ -65,7 +74,7 @@ export class BotConnection {
       version: this.config.version,
       auth: this.config.auth,
       profilesFolder: this.config.profilesFolder,
-      plugins: { pathfinder },
+      plugins: getVersionSpecificPlugins(this.config.version),
     };
 
     this.bot = mineflayer.createBot(botOptions);
@@ -102,7 +111,7 @@ export class BotConnection {
 
     bot.on('kicked', (reason) => {
       this.callbacks.onLog('error', `Bot was kicked from server: ${this.formatError(reason)}`);
-      this.state = 'disconnected';
+      this.markDisconnected(bot);
       bot.quit();
     });
 
@@ -112,9 +121,7 @@ export class BotConnection {
 
       this.callbacks.onLog('error', `Bot error [${errorCode}]: ${errorMsg}`);
 
-      if (errorCode === 'ECONNREFUSED' || errorCode === 'ETIMEDOUT') {
-        this.state = 'disconnected';
-      }
+      this.markDisconnected(bot);
     });
 
     bot.on('login', () => {
@@ -124,11 +131,8 @@ export class BotConnection {
     bot.on('end', (reason) => {
       this.callbacks.onLog('info', `Bot disconnected: ${this.formatError(reason)}`);
 
-      if (this.state === 'connected') {
-        this.state = 'disconnected';
-      }
-
       if (this.bot === bot) {
+        this.markDisconnected(bot);
         try {
           bot.removeAllListeners();
           this.bot = null;
@@ -138,6 +142,14 @@ export class BotConnection {
         }
       }
     });
+  }
+
+  private markDisconnected(bot: mineflayer.Bot): void {
+    // Events from a bot retired during reconnect must not clobber the state of
+    // the replacement instance.
+    if (this.bot !== bot) return;
+    this.state = 'disconnected';
+    this.isReconnecting = false;
   }
 
   attemptReconnect(): void {
@@ -154,10 +166,13 @@ export class BotConnection {
     }
 
     this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
       if (this.bot) {
+        const oldBot = this.bot;
+        this.bot = null;
         try {
-          this.bot.removeAllListeners();
-          this.bot.quit('Reconnecting...');
+          oldBot.removeAllListeners();
+          oldBot.quit('Reconnecting...');
           this.callbacks.onLog('info', 'Old bot instance cleaned up');
         } catch (err) {
           this.callbacks.onLog('warn', `Error while cleaning up old bot: ${this.formatError(err)}`);
@@ -207,10 +222,15 @@ export class BotConnection {
   cleanup(): void {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
     }
     if (this.bot) {
+      const bot = this.bot;
+      this.bot = null;
+      this.state = 'disconnected';
       try {
-        this.bot.quit('Server shutting down');
+        bot.removeAllListeners();
+        bot.quit('Server shutting down');
       } catch (err) {
         this.callbacks.onLog('warn', `Error during cleanup: ${this.formatError(err)}`);
       }

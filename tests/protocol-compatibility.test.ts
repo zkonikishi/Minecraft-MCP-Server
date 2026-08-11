@@ -198,3 +198,15 @@ test('supported versions query includes 26.2 after default apply', (t) => {
   t.true(minecraftData.versionsByMinecraftVersion.pc?.[NATIVE_PROTOCOL_TARGET_VERSION]?.minecraftVersion === NATIVE_PROTOCOL_TARGET_VERSION);
   t.true(minecraftData.supportedVersions.pc.includes(NATIVE_PROTOCOL_TARGET_VERSION));
 });
+
+test('26.2 entity metadata serializer ids match the native registry order', (t) => {
+  applyProtocolCompatibility();
+  const protocol = JSON.stringify(minecraftData(NATIVE_PROTOCOL_TARGET_VERSION).protocol);
+
+  t.true(protocol.includes('"22":"cat_sound_variant"'));
+  t.true(protocol.includes('"24":"cow_sound_variant"'));
+  t.true(protocol.includes('"29":"pig_sound_variant"'));
+  t.true(protocol.includes('"31":"chicken_sound_variant"'));
+  t.true(protocol.includes('"34":"painting_variant"'));
+  t.false(protocol.includes('"30":"painting_variant"'));
+});

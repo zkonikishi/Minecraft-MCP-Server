@@ -2,7 +2,23 @@ import test from 'ava';
 import sinon from 'sinon';
 import { EventEmitter } from 'node:events';
 import type mineflayer from 'mineflayer';
-import { BotConnection } from '../src/bot-connection.js';
+import { BotConnection, getVersionSpecificPlugins } from '../src/bot-connection.js';
+
+function fakeBot(): mineflayer.Bot {
+  const emitter = new EventEmitter() as unknown as mineflayer.Bot;
+  Object.assign(emitter, { username: 'TestBot', quit: sinon.stub() });
+  return emitter;
+}
+
+test('26.2 disables only the incompatible team plugin', (t) => {
+  const plugins26 = getVersionSpecificPlugins('26.2');
+  const pluginsOld = getVersionSpecificPlugins('1.21.11');
+
+  t.is(plugins26.team, false);
+  t.truthy(plugins26.pathfinder);
+  t.false(Object.prototype.hasOwnProperty.call(pluginsOld, 'team'));
+  t.truthy(pluginsOld.pathfinder);
+});
 
 test('constructor initializes with correct state', (t) => {
   const config = { host: 'localhost', port: 25565, username: 'TestBot' };
@@ -192,4 +208,38 @@ test('message stream captures plugin and command replies without chat-only liste
     'MythicReforge 0.1.0 | effective-safe-mode=true'
   ));
   t.is(emitter.listenerCount('chat'), 0);
+});
+
+test('connecting bot end restores disconnected state and permits reconnect', async (t) => {
+  const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
+  const connection = new BotConnection({ host: 'localhost', port: 25565, username: 'TestBot' }, callbacks);
+  const bot = fakeBot();
+  (connection as unknown as { bot: mineflayer.Bot; state: string }).bot = bot;
+  (connection as unknown as { bot: mineflayer.Bot; state: string }).state = 'connecting';
+  (connection as unknown as { registerEventHandlers: (bot: mineflayer.Bot) => void }).registerEventHandlers(bot);
+
+  bot.emit('end', 'socketClosed');
+  t.is(connection.getState(), 'disconnected');
+  t.is(connection.getBot(), null);
+
+  const reconnect = sinon.stub(connection, 'attemptReconnect').callsFake(() => {
+    (connection as unknown as { state: string }).state = 'connected';
+  });
+  await connection.checkConnectionAndReconnect();
+  t.true(reconnect.calledOnce);
+  reconnect.restore();
+});
+
+test('stale bot end cannot disconnect a replacement bot', (t) => {
+  const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
+  const connection = new BotConnection({ host: 'localhost', port: 25565, username: 'TestBot' }, callbacks);
+  const staleBot = fakeBot();
+  const currentBot = fakeBot();
+  (connection as unknown as { registerEventHandlers: (bot: mineflayer.Bot) => void }).registerEventHandlers(staleBot);
+  (connection as unknown as { bot: mineflayer.Bot; state: string }).bot = currentBot;
+  (connection as unknown as { bot: mineflayer.Bot; state: string }).state = 'connected';
+
+  staleBot.emit('end', 'replaced');
+  t.is(connection.getState(), 'connected');
+  t.is(connection.getBot(), currentBot);
 });
