@@ -1,0 +1,13 @@
+﻿import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const c=new Client({name:'md-admin-probe',version:'1'});
+const t=new StdioClientTransport({command:process.execPath,args:['dist/main.js','--host','127.0.0.1','--port','29565','--username','MCPTestBot','--auth','offline','--version','26.2'],cwd:process.cwd(),stderr:'pipe'});
+t.stderr?.on('data',d=>process.stderr.write(d)); await c.connect(t); await sleep(12000);
+const call=(name,args={})=>c.callTool({name,arguments:args});
+const out={tools:(await c.listTools()).tools.map(x=>x.name)};
+out.position=await call('get-position');
+out.reload=await call('send-chat',{message:'/md reload ZDungeon_AmethystGolem'}); await sleep(3000);
+out.play=await call('send-chat',{message:'/md play ZDungeon_AmethystGolem'}); await sleep(12000);
+out.after=await call('get-position'); out.chat=await call('read-chat',{count:50});
+console.log(JSON.stringify(out,null,2)); await c.close();
