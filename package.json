@@ -15,6 +15,7 @@
     ]
   },
   "scripts": {
+    "postinstall": "node tools/install-minecraft-data-26.2.mjs",
     "dev": "tsx src/main.ts",
     "build": "tsc -p tsconfig.build.json",
     "prepare": "npm run build",
@@ -25,10 +26,12 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
-    "minecraft-data": "3.112.0",
-    "mineflayer": "4.37.1",
+    "minecraft-data": "3.113.0",
+    "mineflayer": "github:robertvandervoort/mineflayer#c6a31693b29f123fbd91b35ae04035aeada32cfd",
     "mineflayer-pathfinder": "2.4.5",
+    "prismarine-chunk": "github:robertvandervoort/prismarine-chunk#bcf228b3be07f5105c170ab25f2b4ee723718230",
     "prismarine-item": "1.18.0",
+    "prismarine-physics": "github:robertvandervoort/prismarine-physics#e5597f73f4aa76a621a18b8f14708cc8b6dd33a4",
     "vec3": "^0.1.8",
     "yargs": "^18.0.0",
     "zod": "^3.25.76"
