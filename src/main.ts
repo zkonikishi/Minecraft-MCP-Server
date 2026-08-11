@@ -8,6 +8,7 @@ import { parseConfig } from './config.js';
 import { BotConnection } from './bot-connection.js';
 import { ToolFactory } from './tool-factory.js';
 import { MessageStore } from './message-store.js';
+import { applyProtocolCompatibility } from './protocol-compatibility.js';
 import { registerPositionTools } from './tools/position-tools.js';
 import { registerInventoryTools } from './tools/inventory-tools.js';
 import { registerBlockTools } from './tools/block-tools.js';
@@ -33,6 +34,7 @@ process.on('uncaughtException', (error) => {
 });
 
 async function main() {
+  applyProtocolCompatibility();
   const config = parseConfig();
   const messageStore = new MessageStore();
 

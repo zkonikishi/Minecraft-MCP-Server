@@ -2,8 +2,12 @@ import mineflayer from 'mineflayer';
 import pathfinderPkg from 'mineflayer-pathfinder';
 const { pathfinder, Movements } = pathfinderPkg;
 import minecraftData from 'minecraft-data';
+import { applyProtocolCompatibility, getSupportedMinecraftVersions } from './protocol-compatibility.js';
 
-const SUPPORTED_MINECRAFT_VERSION = '1.21.11';
+function getLatestSupportedMinecraftVersion(): string {
+  const versions = getSupportedMinecraftVersions();
+  return versions[versions.length - 1] ?? '1.21.11';
+}
 
 type ConnectionState = 'connected' | 'connecting' | 'disconnected';
 
@@ -53,6 +57,7 @@ export class BotConnection {
   }
 
   connect(): void {
+    applyProtocolCompatibility();
     const botOptions = {
       host: this.config.host,
       port: this.config.port,
@@ -186,7 +191,7 @@ export class BotConnection {
         `Please ensure:\n` +
         `1. Minecraft server is running on ${this.config.host}:${this.config.port}\n` +
         `2. Server is accessible from this machine\n` +
-        `3. Server version is compatible (latest supported: ${SUPPORTED_MINECRAFT_VERSION})\n\n` +
+        `3. Server version is compatible (latest supported: ${getLatestSupportedMinecraftVersion()})\n\n` +
         `For setup instructions, visit: https://github.com/zkonikishi/minecraft-mcp-server`;
 
       return { connected: false, message: errorMessage };
