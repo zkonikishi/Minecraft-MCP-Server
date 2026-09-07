@@ -18,6 +18,8 @@
     "postinstall": "node tools/install-minecraft-data-26.2.mjs",
     "dev": "tsx src/main.ts",
     "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "typecheck:compat": "tsc6 --noEmit",
     "prepare": "npm run build",
     "start": "node dist/main.js",
     "test": "ava",
@@ -45,6 +47,7 @@
     "@types/yargs": "^17.0.35",
     "@typescript-eslint/eslint-plugin": "^8.55.0",
     "@typescript-eslint/parser": "^8.56.1",
+    "@typescript/native": "npm:typescript@7.0.2",
     "ava": "8.0.1",
     "eslint": "10.10.0",
     "eslint-plugin-ava": "17.0.1",
@@ -52,7 +55,7 @@
     "sinon": "22.1.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "6.0.3"
+    "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "overrides": {
     "minecraft-data": "$minecraft-data",

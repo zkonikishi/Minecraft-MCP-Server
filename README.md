@@ -13,6 +13,14 @@ This fork extends the original [`yuniko-software/minecraft-mcp-server`](https://
 
 The current codebase targets Minecraft protocol version `26.2` (protocol 776). You can explicitly select another Mineflayer-supported protocol with `--version`.
 
+### Compiler toolchain
+
+`npm run build` and `npm run typecheck` use native TypeScript 7. The `typescript`
+dependency is intentionally an alias for the TypeScript 6 compatibility package,
+which supplies the compiler API required by ESLint and other tooling. Do not
+replace this alias with TypeScript 7 directly. `npm run typecheck:compat` also
+checks the project with the compatibility compiler to catch divergence.
+
 ### Paper 26.2 offline integration tests
 
 When testing against an offline-mode Paper server with ModelEngine installed, set

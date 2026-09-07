@@ -17,7 +17,7 @@ Scope: Minecraft MCP branch `26.2`; the standalone Mineflayer repository is not 
 
 `@eslint/js` is now an explicit dependency rather than relying on a transitive install. Node engines match the new AVA toolchain: 22.20+, 24.12+, or 26+. CI now includes branch 26.2 and a 22/24/26 matrix; configuring that matrix is not evidence of completed remote runs.
 
-TypeScript 7.0.2 is deliberately excluded: the installed typescript-eslint peer range is `>=4.8.4 <6.1.0`. No peer-check bypass or force install was used.
+The initial migration excluded a direct TypeScript 7.0.2 replacement: the installed typescript-eslint peer range is `>=4.8.4 <6.1.0`. The subsequent dual-compiler migration below resolves this boundary without a peer-check bypass or force install.
 
 ## Native protocol safeguards
 
@@ -44,3 +44,18 @@ Migration references: [Zod 4 migration](https://zod.dev/v4/changelog), [ESLint 1
 - Evidence: `D:/Servers/AI/Data/Codex/tests/minecraft-mcp-deps-20260907/native-result.json`, SHA256 `D33CFF44A1DBEA0CE0485B7FBB6D35E6F5639889FF9D3C8CB8138413F1163C19`. Audit JSON and the natural-shutdown harness are in the same directory.
 
 Limits: local execution used Node 26.5.0 on Windows. Remote CI matrix results, real Microsoft account authentication, the real ZAppearance plugin, proxy transfer and production plugin-stack behavior are not claimed. The command response came from the isolated synthetic MCPGate plugin.
+
+## TypeScript 7 follow-up
+
+Following the [official side-by-side migration](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/), the compiler dependencies are now:
+
+- `@typescript/native`: `npm:typescript@7.0.2`, providing `tsc` for build and TypeCheck.
+- `typescript`: `npm:@typescript/typescript6@6.0.2`, providing the JavaScript compiler API and `tsc6` for tooling. The compatibility package reports compiler version 6.0.3 at runtime.
+
+No production source or native protocol pin changed. A regression invokes both CLIs and exercises the compatibility AST API. Both TypeCheck commands and lint passed, and the test count is now 169. CI includes both TypeCheck commands.
+
+Independent TS6 and TS7 builds each emitted 44 files (JavaScript and declarations), with identical SHA256 hashes for every corresponding file. Comparison outputs are under `D:/Servers/AI/Data/Codex/builds/minecraft-mcp-ts7-20260907/`. This validates this project's output, not a general equivalence guarantee or a performance benchmark.
+
+Final TS7 gate: a fresh `npm ci` ran the native postinstall and TS7 build successfully. Both TypeChecks, lint, all 169 tests and zero-vulnerability npm audit passed after reinstall. Paper 26.2-92 native login, recovery after initial refusal, player-state retrieval and synthetic four-line command response passed again. No forbidden team/metadata errors occurred. MCP/Paper/harness exited naturally with code 0; remaining owned processes and 29565 listeners were zero. Production 25565 was not used.
+
+TS7 evidence: `D:/Servers/AI/Data/Codex/tests/minecraft-mcp-ts7-20260907/native-result.json`, SHA256 `B0D553B3EF9DB907FC256A5588F24AF3A84D9C7C671766B5BF6A93B1A9DFD800`. The same directory contains audit JSON, compiler hash comparison and the natural-shutdown harness. Remote CI matrix and the previously listed live-test limitations remain unverified.
