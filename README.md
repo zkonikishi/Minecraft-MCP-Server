@@ -1,8 +1,22 @@
 # Minecraft MCP Server
 
-A Model Context Protocol (MCP) server that lets AI clients control a real Minecraft Java Edition player through [Mineflayer](https://github.com/PrismarineJS/mineflayer).
+A Model Context Protocol (MCP) server that lets AI clients control a real Minecraft Java Edition player through our [native 26.2 Mineflayer fork](https://github.com/zkonikishi/Mineflayer/tree/26.2).
 
 This fork extends the original [`yuniko-software/minecraft-mcp-server`](https://github.com/yuniko-software/minecraft-mcp-server) with tools intended for repeatable Paper plugin testing: inventory and item metadata inspection, custom GUI interaction, container transfers, entity interaction, player-state diagnostics, and command-response waiting.
+
+## 本 fork 的定位与验收边界
+
+本仓库是 **MCP 服务端**，不是 Mineflayer 库。它基于 yuniko-software 的项目，增加插件测试所需的窗口、物品组件、实体、命令多行回包和重连能力。
+
+- `26.2` 为当前主线；默认分支安装和官方 Mineflayer npm 包不能替代这里的依赖组合。
+- 当前 package.json 锁定 Mineflayer fork SHA，并固定或 override 协议、数据、chunk、physics 依赖。更新机器人仓库不会自动更新本 MCP。
+- 原生 Paper 26.2 不依赖 ViaVersion。其他 Minecraft 版本可指定，但不是完整兼容性承诺。
+- 已提交版本曾完成隔离服原生登录恢复、MythicMobs / MythicDungeons GUI 点击、物品组件与多行响应测试。实体响应为 `Husk`，大小写断言已修正，2026-09-07 重跑 8/8 隔离服断言通过。
+- ModelEngine 已验证加载及离线加入无 skin URL 异常；裸 `/meg` 处理器不发送聊天响应，等待超时不能视为 MCP 丢包；实际模型和资源包渲染不属于已完成验收。没有验证完整生产插件组合。
+- ZAppearance 已删除，不在测试依赖或验收清单中。
+- Mineflayer 生命周期修复锁定到 `635d93bcb250d17a2b6ea1089a97f2e2a224e015`；以 lockfile 与对应验收报告为准。
+
+对照每次提交的测试报告判断可用性，不把工具存在、单元测试通过和真实插件效果混为一谈。
 
 ## Requirements
 
@@ -40,7 +54,7 @@ Add the server to your MCP client configuration:
       "command": "npx",
       "args": [
         "-y",
-        "github:zkonikishi/minecraft-mcp-server",
+        "github:zkonikishi/Minecraft-MCP-Server#26.2",
         "--host",
         "localhost",
         "--port",
@@ -68,7 +82,7 @@ For an online-mode server, use Microsoft authentication and a persistent token d
       "command": "npx",
       "args": [
         "-y",
-        "github:zkonikishi/minecraft-mcp-server",
+        "github:zkonikishi/Minecraft-MCP-Server#26.2",
         "--host",
         "localhost",
         "--port",
@@ -194,7 +208,7 @@ npm test
 npm run lint
 ```
 
-Current validation baseline: TypeScript build succeeds, lint succeeds, and 153 automated tests pass.
+Validation is revision-specific. Run build, both typechecks, lint and tests for the current checkout; do not treat historical test counts as current acceptance. See the dated reports under docs/.
 
 Run the built MCP server locally:
 
@@ -212,3 +226,9 @@ node dist/main.js --host localhost --port 25565 --username MCPBot --auth offline
 ## License and attribution
 
 This project is based on [`yuniko-software/minecraft-mcp-server`](https://github.com/yuniko-software/minecraft-mcp-server) and uses Mineflayer and the Model Context Protocol SDK. See [LICENSE](LICENSE) for license terms and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance.
+
+### 2026-09-07 验证结果
+
+当前依赖提交已正式安装后重跑：build、双 typecheck、lint 通过，AVA **175/175**；原生 Paper 26.2-92 四插件隔离组合 **8/8**，客户端和服务器自然退出，29565 释放。详见 [验收记录](docs/native-lifecycle-2026-09-07.md)。这不等于完整旧版/生产插件矩阵或图形渲染验收。
+
+如果 npm 提示安装脚本未批准，不要忽略提示后直接启动。从本仓库构建时，可明确执行 `node tools/install-minecraft-data-26.2.mjs` 后再 build；安装器遇到未知版本或数据冲突会停止，不要绕过防护。
