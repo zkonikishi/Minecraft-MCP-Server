@@ -12,7 +12,7 @@ This fork extends the original [`yuniko-software/minecraft-mcp-server`](https://
 - 当前 package.json 锁定 Mineflayer fork SHA，并固定或 override 协议、数据、chunk、physics 依赖。更新机器人仓库不会自动更新本 MCP。
 - 原生 Paper 26.2 不依赖 ViaVersion。其他 Minecraft 版本可指定，但不是完整兼容性承诺。
 - 已提交版本曾完成隔离服原生登录恢复、MythicMobs / MythicDungeons GUI 点击、物品组件与多行响应测试。实体响应为 `Husk`，大小写断言已修正，2026-09-07 重跑 8/8 隔离服断言通过。
-- ModelEngine 已验证加载及离线加入无 skin URL 异常；裸 `/meg` 处理器不发送聊天响应，等待超时不能视为 MCP 丢包；实际模型和资源包渲染不属于已完成验收。没有验证完整生产插件组合。
+- ModelEngine 已验证加载及离线加入无 skin URL 异常；裸 `/meg` 处理器不发送聊天响应，等待超时不能视为 MCP 丢包；模型画面渲染不属于此无头服务的范围。已用 40 个原生插件 JAR 的独立配置组合验证 MCP 核心操作，不代表每个插件的生产业务配置均通过。
 - ZAppearance 已删除，不在测试依赖或验收清单中。
 - Mineflayer 生命周期修复锁定到 `635d93bcb250d17a2b6ea1089a97f2e2a224e015`；以 lockfile 与对应验收报告为准。
 
@@ -232,3 +232,7 @@ This project is based on [`yuniko-software/minecraft-mcp-server`](https://github
 当前依赖提交已正式安装后重跑：build、双 typecheck、lint 通过，AVA **175/175**；原生 Paper 26.2-92 四插件隔离组合 **8/8**，客户端和服务器自然退出，29565 释放。详见 [验收记录](docs/native-lifecycle-2026-09-07.md)。这不等于完整旧版/生产插件矩阵或图形渲染验收。
 
 如果 npm 提示安装脚本未批准，不要忽略提示后直接启动。从本仓库构建时，可明确执行 `node tools/install-minecraft-data-26.2.mjs` 后再 build；安装器遇到未知版本或数据冲突会停止，不要绕过防护。
+
+### 2026-09-08 扩展验收
+
+声明的 28 个版本内部矩阵：576 通过、40 项版本不适用跳过、0 失败；27 个旧版真实服务端基础测试和原生 Paper 26.2 验收通过。40 插件独立组合的 MCP 检查 8/8。具体范围、插件配置限制和 SHA 见 [完整记录](docs/compatibility-2026-09-08.md)。图形客户端不属于这两个项目的验收条件。
