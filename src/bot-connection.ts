@@ -13,11 +13,9 @@ type ConnectionState = 'connected' | 'connecting' | 'disconnected';
 
 type MineflayerPluginOptions = Record<string, mineflayer.Plugin | false>;
 
-export function getVersionSpecificPlugins(version?: string): MineflayerPluginOptions {
-  // Minecraft 26.2 reshaped the teams packet. Mineflayer 4.37 still passes the
-  // old field names to prismarine-chat, which crashes while parsing displayName.
-  // Keep the plugin enabled for every older supported protocol.
-  return version === '26.2' ? { pathfinder, team: false } : { pathfinder };
+export function getVersionSpecificPlugins(_version?: string): MineflayerPluginOptions {
+  // The pinned Mineflayer fork handles native 26.2 teams as well as legacy packets.
+  return { pathfinder };
 }
 
 interface BotConfig {
@@ -171,7 +169,8 @@ export class BotConnection {
         const oldBot = this.bot;
         this.bot = null;
         try {
-          oldBot.removeAllListeners();
+          // Plugin end handlers release physics timers and other runtime resources.
+          oldBot.once('end', () => { oldBot.removeAllListeners(); });
           oldBot.quit('Reconnecting...');
           this.callbacks.onLog('info', 'Old bot instance cleaned up');
         } catch (err) {
@@ -229,7 +228,8 @@ export class BotConnection {
       this.bot = null;
       this.state = 'disconnected';
       try {
-        bot.removeAllListeners();
+        // Remove listeners only after Mineflayer has observed transport shutdown.
+        bot.once('end', () => { bot.removeAllListeners(); });
         bot.quit('Server shutting down');
       } catch (err) {
         this.callbacks.onLog('warn', `Error during cleanup: ${this.formatError(err)}`);

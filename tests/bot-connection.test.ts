@@ -10,11 +10,39 @@ function fakeBot(): mineflayer.Bot {
   return emitter;
 }
 
-test('26.2 disables only the incompatible team plugin', (t) => {
+for (const action of ['cleanup', 'reconnect']) {
+  test.serial(`${action} preserves plugin end handlers until transport shutdown`, async t => {
+    const clock = sinon.useFakeTimers();
+    t.teardown(() => clock.restore());
+    const connection = new BotConnection({ host: 'localhost', port: 29565, username: 'TestBot', auth: 'offline' }, {
+      onLog: sinon.stub(), onChatMessage: sinon.stub()
+    }, 1);
+    const bot = fakeBot();
+    const stopped = sinon.spy();
+    bot.on('end', stopped);
+    (bot.quit as sinon.SinonStub).callsFake(() => setTimeout(() => bot.emit('end', 'closed'), 1));
+    (connection as unknown as { bot: mineflayer.Bot }).bot = bot;
+    const connect = sinon.stub(connection, 'connect');
+    if (action === 'cleanup') connection.cleanup();
+    else {
+      connection.attemptReconnect();
+      await clock.tickAsync(1);
+      t.true(connect.calledOnce);
+    }
+    t.false(stopped.called);
+    await clock.tickAsync(1);
+    t.true(stopped.calledOnce);
+    t.is(bot.listenerCount('end'), 0);
+    t.is(connection.getBot(), null);
+    connection.cleanup();
+  });
+}
+
+test('26.2 and older versions retain the default team plugin', (t) => {
   const plugins26 = getVersionSpecificPlugins('26.2');
   const pluginsOld = getVersionSpecificPlugins('1.21.11');
 
-  t.is(plugins26.team, false);
+  t.false(Object.prototype.hasOwnProperty.call(plugins26, 'team'));
   t.truthy(plugins26.pathfinder);
   t.false(Object.prototype.hasOwnProperty.call(pluginsOld, 'team'));
   t.truthy(pluginsOld.pathfinder);
