@@ -60,7 +60,7 @@ test('get-position returns current bot position', async (t) => {
     entity: {
       position: new Vec3(100, 64, 200)
     }
-  } as Partial<mineflayer.Bot>;
+  } as unknown as Partial<mineflayer.Bot>;
   const getBot = () => mockBot as mineflayer.Bot;
 
   registerPositionTools(factory, getBot);
@@ -93,7 +93,7 @@ test('move-to-position returns error when pathfinding fails', async (t) => {
     entity: {
       position: new Vec3(10, 20, 30)
     }
-  } as Partial<mineflayer.Bot>;
+  } as unknown as Partial<mineflayer.Bot>;
   const getBot = () => mockBot as mineflayer.Bot;
 
   registerPositionTools(factory, getBot);

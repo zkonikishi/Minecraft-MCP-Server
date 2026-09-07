@@ -21,7 +21,7 @@ test('26.2 disables only the incompatible team plugin', (t) => {
 });
 
 test('constructor initializes with correct state', (t) => {
-  const config = { host: 'localhost', port: 25565, username: 'TestBot' };
+  const config = { host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' as const };
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
   const connection = new BotConnection(config, callbacks);
 
@@ -32,7 +32,7 @@ test('constructor initializes with correct state', (t) => {
 });
 
 test('constructor accepts custom reconnect delay', (t) => {
-  const config = { host: 'localhost', port: 25565, username: 'TestBot' };
+  const config = { host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' as const };
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
   const customDelay = 5000;
   const connection = new BotConnection(config, callbacks, customDelay);
@@ -41,7 +41,7 @@ test('constructor accepts custom reconnect delay', (t) => {
 });
 
 test('getState returns current state', (t) => {
-  const config = { host: 'localhost', port: 25565, username: 'TestBot' };
+  const config = { host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' as const };
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
   const connection = new BotConnection(config, callbacks);
 
@@ -49,7 +49,7 @@ test('getState returns current state', (t) => {
 });
 
 test('getConfig returns configuration', (t) => {
-  const config = { host: 'example.com', port: 30000, username: 'MyBot' };
+  const config = { host: 'example.com', port: 30000, username: 'MyBot', auth: 'offline' as const };
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
   const connection = new BotConnection(config, callbacks);
 
@@ -60,7 +60,7 @@ test('getConfig returns configuration', (t) => {
 });
 
 test('getBot returns null initially', (t) => {
-  const config = { host: 'localhost', port: 25565, username: 'TestBot' };
+  const config = { host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' as const };
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
   const connection = new BotConnection(config, callbacks);
 
@@ -68,7 +68,7 @@ test('getBot returns null initially', (t) => {
 });
 
 test('isConnected returns false when state is disconnected', (t) => {
-  const config = { host: 'localhost', port: 25565, username: 'TestBot' };
+  const config = { host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' as const };
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
   const connection = new BotConnection(config, callbacks);
 
@@ -76,7 +76,7 @@ test('isConnected returns false when state is disconnected', (t) => {
 });
 
 test('formatError handles Error objects', (t) => {
-  const config = { host: 'localhost', port: 25565, username: 'TestBot' };
+  const config = { host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' as const };
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
   const connection = new BotConnection(config, callbacks);
 
@@ -87,7 +87,7 @@ test('formatError handles Error objects', (t) => {
 });
 
 test('formatError handles plain objects', (t) => {
-  const config = { host: 'localhost', port: 25565, username: 'TestBot' };
+  const config = { host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' as const };
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
   const connection = new BotConnection(config, callbacks);
 
@@ -99,7 +99,7 @@ test('formatError handles plain objects', (t) => {
 });
 
 test('formatError handles strings', (t) => {
-  const config = { host: 'localhost', port: 25565, username: 'TestBot' };
+  const config = { host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' as const };
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
   const connection = new BotConnection(config, callbacks);
 
@@ -109,7 +109,7 @@ test('formatError handles strings', (t) => {
 });
 
 test('formatError handles non-serializable objects', (t) => {
-  const config = { host: 'localhost', port: 25565, username: 'TestBot' };
+  const config = { host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' as const };
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
   const connection = new BotConnection(config, callbacks);
 
@@ -121,7 +121,7 @@ test('formatError handles non-serializable objects', (t) => {
 });
 
 test('checkConnectionAndReconnect returns connected when already connected', async (t) => {
-  const config = { host: 'localhost', port: 25565, username: 'TestBot' };
+  const config = { host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' as const };
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
   const connection = new BotConnection(config, callbacks);
   
@@ -134,7 +134,7 @@ test('checkConnectionAndReconnect returns connected when already connected', asy
 });
 
 test('checkConnectionAndReconnect returns message when connecting', async (t) => {
-  const config = { host: 'localhost', port: 25565, username: 'TestBot' };
+  const config = { host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' as const };
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
   const connection = new BotConnection(config, callbacks);
 
@@ -147,7 +147,7 @@ test('checkConnectionAndReconnect returns message when connecting', async (t) =>
 });
 
 test('checkConnectionAndReconnect includes setup instructions on failure', async (t) => {
-  const config = { host: 'localhost', port: 25565, username: 'TestBot' };
+  const config = { host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' as const };
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
   const connection = new BotConnection(config, callbacks, 100);
 
@@ -170,7 +170,7 @@ test('checkConnectionAndReconnect includes setup instructions on failure', async
 });
 
 test('cleanup clears reconnect timer', (t) => {
-  const config = { host: 'localhost', port: 25565, username: 'TestBot' };
+  const config = { host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' as const };
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
   const connection = new BotConnection(config, callbacks);
 
@@ -182,7 +182,7 @@ test('cleanup clears reconnect timer', (t) => {
 });
 
 test('cleanup does not throw when no bot exists', (t) => {
-  const config = { host: 'localhost', port: 25565, username: 'TestBot' };
+  const config = { host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' as const };
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
   const connection = new BotConnection(config, callbacks);
 
@@ -192,16 +192,17 @@ test('cleanup does not throw when no bot exists', (t) => {
 });
 
 test('message stream captures plugin and command replies without chat-only listener', (t) => {
-  const config = { host: 'localhost', port: 25565, username: 'TestBot' };
+  const config = { host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' as const };
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
   const connection = new BotConnection(config, callbacks);
   const emitter = new EventEmitter() as unknown as mineflayer.Bot;
   Object.assign(emitter, { username: 'TestBot' });
 
   (connection as unknown as { registerEventHandlers: (bot: mineflayer.Bot) => void }).registerEventHandlers(emitter);
-  emitter.emit('messagestr', 'MythicReforge 0.1.0 | effective-safe-mode=true', 'system');
-  emitter.emit('messagestr', '[ 23°C ]', 'game_info');
-  emitter.emit('messagestr', '   ', 'system');
+  const events = emitter as unknown as EventEmitter;
+  events.emit('messagestr', 'MythicReforge 0.1.0 | effective-safe-mode=true', 'system');
+  events.emit('messagestr', '[ 23°C ]', 'game_info');
+  events.emit('messagestr', '   ', 'system');
 
   t.true(callbacks.onChatMessage.calledOnceWith(
     'system',
@@ -212,7 +213,7 @@ test('message stream captures plugin and command replies without chat-only liste
 
 test('connecting bot end restores disconnected state and permits reconnect', async (t) => {
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
-  const connection = new BotConnection({ host: 'localhost', port: 25565, username: 'TestBot' }, callbacks);
+  const connection = new BotConnection({ host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' }, callbacks);
   const bot = fakeBot();
   (connection as unknown as { bot: mineflayer.Bot; state: string }).bot = bot;
   (connection as unknown as { bot: mineflayer.Bot; state: string }).state = 'connecting';
@@ -232,7 +233,7 @@ test('connecting bot end restores disconnected state and permits reconnect', asy
 
 test('stale bot end cannot disconnect a replacement bot', (t) => {
   const callbacks = { onLog: sinon.stub(), onChatMessage: sinon.stub() };
-  const connection = new BotConnection({ host: 'localhost', port: 25565, username: 'TestBot' }, callbacks);
+  const connection = new BotConnection({ host: 'localhost', port: 25565, username: 'TestBot', auth: 'offline' }, callbacks);
   const staleBot = fakeBot();
   const currentBot = fakeBot();
   (connection as unknown as { registerEventHandlers: (bot: mineflayer.Bot) => void }).registerEventHandlers(staleBot);

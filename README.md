@@ -6,7 +6,7 @@ This fork extends the original [`yuniko-software/minecraft-mcp-server`](https://
 
 ## Requirements
 
-- Node.js 20.10 or newer
+- Node.js 22.20+, 24.12+, or 26+ (matching the supported build/test toolchain)
 - A reachable Minecraft Java Edition server
 - An MCP-compatible client such as Codex or Claude Desktop
 - An offline-mode test account, or a Microsoft account when `--auth microsoft` is used

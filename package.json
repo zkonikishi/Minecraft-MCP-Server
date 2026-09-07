@@ -26,34 +26,36 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
-    "minecraft-data": "3.113.0",
+    "minecraft-data": "3.116.0",
     "mineflayer": "github:zkonikishi/Mineflayer#1675d3f6",
     "mineflayer-pathfinder": "2.4.5",
     "prismarine-chunk": "github:robertvandervoort/prismarine-chunk#bcf228b3be07f5105c170ab25f2b4ee723718230",
     "prismarine-item": "1.18.0",
     "prismarine-physics": "github:robertvandervoort/prismarine-physics#e5597f73f4aa76a621a18b8f14708cc8b6dd33a4",
-    "vec3": "^0.1.8",
+    "vec3": "0.2.0",
     "yargs": "^18.0.0",
-    "zod": "^3.25.76"
+    "zod": "4.5.4"
   },
   "devDependencies": {
-    "@ava/typescript": "^6.0.0",
-    "@types/node": "^25.2.3",
-    "@types/sinon": "^21.0.0",
+    "@ava/typescript": "7.0.0",
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.4.1",
+    "@types/sinon": "22.0.0",
     "@types/vec3": "^0.1.4",
     "@types/yargs": "^17.0.35",
     "@typescript-eslint/eslint-plugin": "^8.55.0",
     "@typescript-eslint/parser": "^8.56.1",
-    "ava": "^6.4.1",
-    "eslint": "^9.39.2",
-    "eslint-plugin-ava": "^15.1.0",
+    "ava": "8.0.1",
+    "eslint": "10.10.0",
+    "eslint-plugin-ava": "17.0.1",
     "globals": "^17.3.0",
-    "sinon": "^21.0.1",
+    "sinon": "22.1.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "6.0.3"
   },
   "overrides": {
+    "minecraft-data": "$minecraft-data",
     "minecraft-protocol": "github:PrismarineJS/node-minecraft-protocol#7be0679a16aeab604dd38982e317bf3b1228e6dd",
     "@azure/msal-node": {
       "uuid": "11.1.1"
@@ -63,6 +65,6 @@
     }
   },
   "engines": {
-    "node": ">=20.10.0"
+    "node": "^22.20.0 || ^24.12.0 || >=26.0.0"
   }
 }
