@@ -1,5 +1,7 @@
 # Minecraft MCP Server
 
+2026-09-13 update: pins Mineflayer 1eaa3417 with the container replacement-state fix; native 26.2 protocol patches are retained. Creative statistics acknowledgement changes are deliberately excluded pending response-correlation fixes.
+
 A Model Context Protocol (MCP) server that lets AI clients control a real Minecraft Java Edition player through our [native 26.2 Mineflayer fork](https://github.com/zkonikishi/Mineflayer/tree/26.2).
 
 This fork extends the original [`yuniko-software/minecraft-mcp-server`](https://github.com/yuniko-software/minecraft-mcp-server) with tools intended for repeatable Paper plugin testing: inventory and item metadata inspection, custom GUI interaction, container transfers, entity interaction, player-state diagnostics, and command-response waiting.

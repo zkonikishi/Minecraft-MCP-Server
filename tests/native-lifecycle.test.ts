@@ -18,3 +18,10 @@ test('native installer fails closed before overwriting unknown data', t => {
   });
   t.regex(output, /(?:pass 1|# pass 1)/);
 });
+
+test('pinned Mineflayer clears replaced container lid state', t => {
+  const output = execFileSync(process.execPath, [require.resolve('mineflayer/tools/block-actions-regression.js')], {
+    encoding: 'utf8', timeout: 30000, windowsHide: true
+  });
+  t.regex(output, /5 block-action regressions passed/);
+});
