@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
 
-for (const [script, count] of [['game-lifecycle-regression.js', 4], ['time-regression.js', 2]] as const) {
+for (const [script, count] of [['game-lifecycle-regression.js', 4], ['time-regression.js', 2], ['upstream-september-regression.js', 14]] as const) {
   test(`pinned Mineflayer passes ${script}`, t => {
     const output = execFileSync(process.execPath, ['--test', require.resolve(`mineflayer/tools/${script}`)], {
       encoding: 'utf8', timeout: 30000, windowsHide: true

@@ -311,3 +311,11 @@ test('close-current-window closes open window', async (t) => {
   t.true(closeWindowStub.calledOnceWith(window));
   t.true(result.content[0].text.includes('Closed window id=10'));
 });
+
+test('list-current-window renders ChatMessage titles as text', async t => {
+  const { mockServer, factory } = createFactory();
+  const mockBot = { currentWindow: { id: 1, type: 'custom', slots: [], title: { toString: () => 'Mythic Menu' } } } as unknown as mineflayer.Bot;
+  registerWindowTools(factory, () => mockBot);
+  const result = await toolExecutor(mockServer, 'list-current-window')({});
+  t.true(result.content[0].text.includes('title=Mythic Menu'));
+});

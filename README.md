@@ -1,5 +1,7 @@
 # Minecraft MCP Server
 
+2026-09-15：集成新一批 Mineflayer 生命周期和状态修复，窗口标题按可读文本输出。玩家能力字段已支持，但不代表新增完整创造飞行物理模拟。
+
 2026-09-13 update: pins Mineflayer 1eaa3417 with the container replacement-state fix; native 26.2 protocol patches are retained. Creative statistics acknowledgement changes are deliberately excluded pending response-correlation fixes.
 
 A Model Context Protocol (MCP) server that lets AI clients control a real Minecraft Java Edition player through our [native 26.2 Mineflayer fork](https://github.com/zkonikishi/Mineflayer/tree/26.2).

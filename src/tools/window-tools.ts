@@ -9,7 +9,7 @@ import { itemDetails } from './item-inspection-tools.js';
 type WindowLike = {
   id: number;
   type: string | number;
-  title?: string;
+  title?: unknown;
   slots: Array<Item | null>;
   close?: () => void;
   selectedItem?: Item | null;
@@ -51,7 +51,10 @@ function sameItemKind(left: Item | null | undefined, right: Item | null | undefi
 }
 
 function formatWindow(window: WindowLike, includeEmpty: boolean): string {
-  const title = typeof window.title === "string" ? window.title : JSON.stringify(window.title ?? "");
+  const value = window.title;
+  const title = typeof value === "string" ? value
+    : value && typeof value === "object" && value.toString !== Object.prototype.toString
+      ? String(value) : JSON.stringify(value ?? "");
   const lines = [
     `Window id=${window.id} type=${window.type} title=${title}`,
     `Slots: ${window.slots.length}`,
