@@ -1,5 +1,9 @@
 # Minecraft MCP Server
 
+## 实验性视觉（第一阶段）
+
+新增 `get-bot-view`：通过 MCP 返回第一人称 PNG 和方块信息，工具总数为 45。它基于服务器提供的方块碰撞形状生成**简化结构视图**，不是游戏客户端截图；目前不显示纹理、实体、GUI、资源包或自定义模型，也没有自动图像识别。详见 [视觉说明](docs/visual-preview.md)。
+
 2026-09-15：集成新一批 Mineflayer 生命周期和状态修复，窗口标题按可读文本输出。玩家能力字段已支持，但不代表新增完整创造飞行物理模拟。
 
 2026-09-13 update: pins Mineflayer 1eaa3417 with the container replacement-state fix; native 26.2 protocol patches are retained. Creative statistics acknowledgement changes are deliberately excluded pending response-correlation fixes.

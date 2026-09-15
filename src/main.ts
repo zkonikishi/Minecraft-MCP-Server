@@ -22,6 +22,7 @@ import { registerContainerTools } from './tools/container-tools.js';
 import { registerWindowTools } from './tools/window-tools.js';
 import { registerItemInspectionTools } from './tools/item-inspection-tools.js';
 import { registerDiagnosticTools } from './tools/diagnostic-tools.js';
+import { registerVisualTools } from './tools/visual-tools.js';
 
 setupStdioFiltering();
 
@@ -69,6 +70,7 @@ async function main() {
   registerWindowTools(factory, getBot);
   registerItemInspectionTools(factory, getBot);
   registerDiagnosticTools(factory, getBot);
+  registerVisualTools(factory, getBot);
 
   process.stdin.on('end', () => {
     connection.cleanup();

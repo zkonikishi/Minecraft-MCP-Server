@@ -8,6 +8,11 @@ type McpResponse = {
   [key: string]: unknown;
 };
 
+type ImageResponse = {
+  content: Array<{ type: 'text'; text: string } | { type: 'image'; data: string; mimeType: 'image/png' }>;
+  [key: string]: unknown;
+};
+
 export class ToolFactory {
   constructor(
     private server: McpServer,
@@ -19,9 +24,9 @@ export class ToolFactory {
     description: string,
     schema: Record<string, unknown>,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    executor: (args: any) => Promise<McpResponse>
+    executor: (args: any) => Promise<McpResponse | ImageResponse>
   ): void {
-    this.server.tool(name, description, schema, async (args: unknown): Promise<McpResponse> => {
+    this.server.tool(name, description, schema, async (args: unknown): Promise<McpResponse | ImageResponse> => {
       const connectionCheck = await this.connection.checkConnectionAndReconnect();
 
       if (!connectionCheck.connected) {
@@ -46,6 +51,13 @@ export class ToolFactory {
     return {
       content: [{ type: "text", text }]
     };
+  }
+
+  createImageResponse(png: Buffer, description: string): ImageResponse {
+    return { content: [
+      { type: 'text', text: description },
+      { type: 'image', data: png.toString('base64'), mimeType: 'image/png' }
+    ] };
   }
 
   createErrorResponse(error: Error | string): McpResponse {
