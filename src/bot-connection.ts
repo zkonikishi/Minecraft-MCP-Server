@@ -22,6 +22,7 @@ export function getVersionSpecificPlugins(_version?: string): MineflayerPluginOp
 type BotConfig = ServerConfig;
 
 interface ConnectionCallbacks {
+  onSpawn?: (bot: mineflayer.Bot) => void;
   onLog: (level: string, message: string) => void;
   onChatMessage: (username: string, message: string) => void;
 }
@@ -79,12 +80,14 @@ export class BotConnection {
 
   private registerEventHandlers(bot: mineflayer.Bot): void {
     bot.once('spawn', async () => {
+      if (this.bot !== bot) return;
       this.state = 'connected';
       this.callbacks.onLog('info', 'Bot spawned in world');
 
       const mcData = minecraftData(bot.version);
       const defaultMove = new Movements(bot, mcData);
       bot.pathfinder.setMovements(defaultMove);
+      this.callbacks.onSpawn?.(bot);
 
       bot.chat('LLM-powered bot ready to receive instructions!');
       this.callbacks.onLog('info', `Bot connected successfully. Username: ${this.config.username}, Server: ${this.config.host}:${this.config.port}`);

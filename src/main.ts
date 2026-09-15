@@ -23,6 +23,8 @@ import { registerWindowTools } from './tools/window-tools.js';
 import { registerItemInspectionTools } from './tools/item-inspection-tools.js';
 import { registerDiagnosticTools } from './tools/diagnostic-tools.js';
 import { registerVisualTools } from './tools/visual-tools.js';
+import { behaviorProfile, requestProfileGameMode } from './behavior-profile.js';
+import { registerBehaviorTools } from './tools/behavior-tools.js';
 
 setupStdioFiltering();
 
@@ -37,12 +39,23 @@ process.on('uncaughtException', (error) => {
 async function main() {
   applyProtocolCompatibility();
   const config = parseConfig();
+  const profile = behaviorProfile(config);
   const messageStore = new MessageStore();
 
   const connection = new BotConnection(
     config,
     {
       onLog: log,
+      onSpawn: bot => {
+        if (profile.mode === 'maid') {
+          bot.pathfinder.movements.canDig = false;
+          bot.pathfinder.movements.allow1by1towers = false;
+          bot.pathfinder.movements.allowParkour = false;
+          bot.pathfinder.movements.scafoldingBlocks = [];
+        }
+        requestProfileGameMode(bot, config);
+        log('info', `Behavior: ${profile.mode}; desired permission: ${profile.desiredPermission} (server-managed, not verified)`);
+      },
       onChatMessage: (username, message) => messageStore.addMessage(username, message)
     }
   );
@@ -52,7 +65,7 @@ async function main() {
   const server = new McpServer({
     name: "minecraft-mcp-server",
     version: "2.0.4"
-  });
+  }, { instructions: profile.instructions });
 
   const factory = new ToolFactory(server, connection);
   const getBot = () => connection.getBot()!;
@@ -71,6 +84,7 @@ async function main() {
   registerItemInspectionTools(factory, getBot);
   registerDiagnosticTools(factory, getBot, () => describeConnection(config, getBot().version));
   registerVisualTools(factory, getBot);
+  registerBehaviorTools(factory, getBot, config);
 
   process.stdin.on('end', () => {
     connection.cleanup();

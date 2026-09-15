@@ -10,6 +10,8 @@ export interface ServerConfig {
   profilesFolder?: string;
   connectionMode?: 'native' | 'via-plugin' | 'via-proxy' | 'via-server-mod';
   backendVersion?: string;
+  behaviorMode?: 'developer' | 'maid' | 'player';
+  owner?: string;
 }
 
 export function validateConnectionMode(config: ServerConfig): void {
@@ -40,6 +42,11 @@ export function describeConnection(config: ServerConfig, clientVersion: string) 
 export function parseConfig(): ServerConfig {
   const config = yargs(hideBin(process.argv))
     .version(false)
+    .option('behavior-mode', {
+      type: 'string', choices: ['developer', 'maid', 'player'] as const,
+      default: 'player' as const, description: 'AI behavior profile (separate from Via connection mode)'
+    })
+    .option('owner', { type: 'string', description: 'Bound Minecraft owner username; required in maid mode' })
     .option('host', {
       type: 'string',
       description: 'Minecraft server host',

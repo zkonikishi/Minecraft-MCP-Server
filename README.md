@@ -6,6 +6,8 @@
 
 ## 两个项目如何分工
 
+新增 [三种行为模式](docs/behavior-modes.md)：开发者（创造/测试与工程）、女仆（创造/绑定服主与跟随）、玩家（默认生存）。权限由服务器授予，复杂任务和聊天仍由 MCP 宿主 AI 驱动。
+
 现已接入 Via 系列的显式连接配置与诊断；插件/代理仍在外部运行。版本矩阵、命令和限制见 [Via 跨版本接入](docs/via-compatibility.md)。这不是任意内容模组兼容层。
 
 | 项目 | 职责 |
@@ -31,7 +33,9 @@
 
 这些是本项目已实现的维护重点，不表示上游未来永远不会加入相同能力。
 
-## 当前能力：45 个 MCP 工具
+## 当前能力：48 个 MCP 工具
+
+角色工具：`get-behavior-profile`、`apply-behavior-defaults`、`maid-follow-owner`，见[行为模式文档](docs/behavior-modes.md)。
 
 | 类别 | 工具 |
 | --- | --- |
