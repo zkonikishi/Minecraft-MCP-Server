@@ -1,246 +1,156 @@
-# Minecraft MCP Server
+# Minecraft MCP Server · 原生协议自动化与实验性视觉
 
-## 实验性视觉（第一阶段）
+面向 Minecraft Java Edition 的 AI 操作与插件测试工具。AI 客户端通过 MCP 控制一个真实连接到服务器的机器人玩家，读取状态、操作菜单、检查物品和执行可验证的测试流程。
 
-新增 `get-bot-view`：通过 MCP 返回第一人称 PNG 和方块信息，工具总数为 45。它基于服务器提供的方块碰撞形状生成**简化结构视图**，不是游戏客户端截图；目前不显示纹理、实体、GUI、资源包或自定义模型，也没有自动图像识别。详见 [视觉说明](docs/visual-preview.md)。
+**这是 zkonikishi 独立维护的派生项目，不是原版项目的镜像，也不是完全重写的协议客户端。** 当前主线为 `26.2`，仍使用我们维护的 Mineflayer 作为连接底层。架构独立化、跨模组适配是后续方向，尚未完成。
 
-2026-09-15：集成新一批 Mineflayer 生命周期和状态修复，窗口标题按可读文本输出。玩家能力字段已支持，但不代表新增完整创造飞行物理模拟。
+## 两个项目如何分工
 
-2026-09-13 update: pins Mineflayer 1eaa3417 with the container replacement-state fix; native 26.2 protocol patches are retained. Creative statistics acknowledgement changes are deliberately excluded pending response-correlation fixes.
+| 项目 | 职责 |
+| --- | --- |
+| **本仓库：Minecraft MCP Server** | MCP 工具、连接与重连、命令回复收集、插件 GUI/物品检查、实验性 PNG 结构视图 |
+| [Mineflayer 原生兼容库](https://github.com/zkonikishi/Mineflayer/tree/26.2) | Minecraft 协议连接、世界与实体数据、玩家操作、版本兼容和底层状态修复 |
 
-A Model Context Protocol (MCP) server that lets AI clients control a real Minecraft Java Edition player through our [native 26.2 Mineflayer fork](https://github.com/zkonikishi/Mineflayer/tree/26.2).
+当前调用路径是 **AI 客户端 → MCP 工具 → Mineflayer → Minecraft 服务器**。MCP 的图像能力在本仓库实现，不属于 Mineflayer 库自带功能。
 
-This fork extends the original [`yuniko-software/minecraft-mcp-server`](https://github.com/yuniko-software/minecraft-mcp-server) with tools intended for repeatable Paper plugin testing: inventory and item metadata inspection, custom GUI interaction, container transfers, entity interaction, player-state diagnostics, and command-response waiting.
+## 与原版项目的主要差异
 
-## 本 fork 的定位与验收边界
+本项目基于 [yuniko-software/minecraft-mcp-server](https://github.com/yuniko-software/minecraft-mcp-server)，目前重点已扩展为原生协议适配、服务器插件自动化与可核验状态反馈：
 
-本仓库是 **MCP 服务端**，不是 Mineflayer 库。它基于 yuniko-software 的项目，增加插件测试所需的窗口、物品组件、实体、命令多行回包和重连能力。
+| 方向 | 本维护版本的实现 |
+| --- | --- |
+| 原生 26.2 | 固定并验证数据、协议、区块、物理及机器人依赖组合；不使用 ViaVersion 冒充原生支持 |
+| 连接生命周期 | 连接失败恢复、重连状态清理、避免旧实例事件覆盖新连接，保留插件退出处理 |
+| 插件菜单 | 查看窗口、槽位、光标物品，点击与搬运；处理 Paper 拒绝点击、服务端关窗及状态恢复 |
+| 物品验证 | 读取名称、lore、NBT、数据组件、附魔、耐久等，验证插件奖励和装备变化 |
+| 命令回包 | 收集多行命令/插件回复，支持匹配和超时诊断；区分聊天与高频 ActionBar 噪声 |
+| 实验性视觉 | `get-bot-view` 返回第一人称方块碰撞结构 PNG 与元数据 |
+| 工程验证 | 原生数据安装防护、回归测试、独立 Paper 实机验证和按日期保存的验收说明 |
 
-- `26.2` 为当前主线；默认分支安装和官方 Mineflayer npm 包不能替代这里的依赖组合。
-- 当前 package.json 锁定 Mineflayer fork SHA，并固定或 override 协议、数据、chunk、physics 依赖。更新机器人仓库不会自动更新本 MCP。
-- 原生 Paper 26.2 不依赖 ViaVersion。其他 Minecraft 版本可指定，但不是完整兼容性承诺。
-- 已提交版本曾完成隔离服原生登录恢复、MythicMobs / MythicDungeons GUI 点击、物品组件与多行响应测试。实体响应为 `Husk`，大小写断言已修正，2026-09-07 重跑 8/8 隔离服断言通过。
-- ModelEngine 已验证加载及离线加入无 skin URL 异常；裸 `/meg` 处理器不发送聊天响应，等待超时不能视为 MCP 丢包；模型画面渲染不属于此无头服务的范围。已用 40 个原生插件 JAR 的独立配置组合验证 MCP 核心操作，不代表每个插件的生产业务配置均通过。
-- ZAppearance 已删除，不在测试依赖或验收清单中。
-- Mineflayer 生命周期修复锁定到 `635d93bcb250d17a2b6ea1089a97f2e2a224e015`；以 lockfile 与对应验收报告为准。
+这些是本项目已实现的维护重点，不表示上游未来永远不会加入相同能力。
 
-对照每次提交的测试报告判断可用性，不把工具存在、单元测试通过和真实插件效果混为一谈。
+## 当前能力：45 个 MCP 工具
 
-## Requirements
+| 类别 | 工具 |
+| --- | --- |
+| 移动与朝向 | `get-position`、`move-to-position`、`look-at`、`jump`、`move-in-direction`、`fly-to` |
+| 方块 | `place-block`、`dig-block`、`get-block-info`、`find-blocks` |
+| 背包与物品 | `list-inventory`、`find-item`、`equip-item`、`set-quickbar-slot`、`drop-item`、`drop-selected-item`、`pickup-nearest-item`、`inspect-item`、`inspect-held-item`、`use-held-item` |
+| 容器 | `list-container`、`deposit-to-container`、`withdraw-from-container` |
+| 窗口与插件 GUI | `open-block-window`、`list-current-window`、`inspect-window-slot`、`click-window-slot`、`move-window-slot`、`quick-move-window-slot`、`close-current-window` |
+| 实体与状态 | `find-entity`、`list-nearby-entities`、`interact-entity`、`get-player-state`、`detect-gamemode`、`wait-ticks` |
+| 聊天与命令 | `send-chat`、`read-chat`、`run-command-and-wait` |
+| 合成与熔炉 | `list-recipes`、`get-recipe`、`can-craft`、`craft-item`、`smelt-item` |
+| 实验性图像 | `get-bot-view` |
 
-- Node.js 22.20+, 24.12+, or 26+ (matching the supported build/test toolchain)
-- A reachable Minecraft Java Edition server
-- An MCP-compatible client such as Codex or Claude Desktop
-- An offline-mode test account, or a Microsoft account when `--auth microsoft` is used
+例如：发送打开强化菜单的命令 → 查看槽位 → 放入武器与材料 → 点击确认 → 等待处理 → 检查武器数据和材料数量。仅打开 GUI 而不发送聊天回复的命令应配合 `send-chat` 和窗口检查，不应把等待聊天超时当成失败。
 
-The current codebase targets Minecraft protocol version `26.2` (protocol 776). You can explicitly select another Mineflayer-supported protocol with `--version`.
+机器人仍受服务端权限、游戏模式和资源限制；它不是不受限制的管理员，也不是服务器进程管理器。
 
-### Compiler toolchain
+## 视觉能力：已能生成图像，但不是完整游戏画面
 
-`npm run build` and `npm run typecheck` use native TypeScript 7. The `typescript`
-dependency is intentionally an alias for the TypeScript 6 compatibility package,
-which supplies the compiler API required by ESLint and other tooling. Do not
-replace this alias with TypeScript 7 directly. `npm run typecheck:compat` also
-checks the project with the compatibility compiler to catch divergence.
-
-### Paper 26.2 offline integration tests
-
-When testing against an offline-mode Paper server with ModelEngine installed, set
-`Eager-Generate-Skins=false`. Offline test identities do not have a Mojang skin URL,
-and ModelEngine otherwise throws `RuntimeException: Skin URL is null` during join.
-Alternatively, use a test account with valid skin profile data. This is a server
-plugin constraint, not a Mineflayer/MCP protocol failure.
-
-## Quick start
-
-Add the server to your MCP client configuration:
+`get-bot-view` 示例参数：
 
 ```json
-{
-  "mcpServers": {
-    "minecraft": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "github:zkonikishi/Minecraft-MCP-Server#26.2",
-        "--host",
-        "localhost",
-        "--port",
-        "25565",
-        "--username",
-        "MCPBot",
-        "--auth",
-        "offline"
-      ]
-    }
-  }
-}
+{"width":320,"distance":24,"fov":70}
 ```
 
-Restart the MCP client after changing its configuration. Restarting Minecraft is not required when only the MCP process has changed.
+返回标准 MCP PNG 图像和相机位置、朝向、可见方块、未知区域等元数据。不需要启动图形客户端、浏览器或额外端口，也不会自动调用外部图像识别服务。
 
-### Microsoft authentication
+- **已实现：** 原生世界数据驱动的方块碰撞形状、透视、遮挡、合成色彩和辅助网格。
+- **尚未实现：** 真实纹理、实体/皮肤、GUI 画面、光照、资源包、自定义模型和动画、自动图像识别。
+- 无碰撞形状的装饰可能不显示；紫色代表未知区块，蓝色代表视距上限。不能凭图像判断没有怪物或危险。
+- 玩家能力字段已支持，不代表物理引擎已实现完整创造飞行模拟；既有 `fly-to` 与该能力字段不是同一项功能。
 
-For an online-mode server, use Microsoft authentication and a persistent token directory:
+参数范围、限制和实测记录见 [视觉说明](docs/visual-preview.md)。
 
-```json
-{
-  "mcpServers": {
-    "minecraft": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "github:zkonikishi/Minecraft-MCP-Server#26.2",
-        "--host",
-        "localhost",
-        "--port",
-        "25565",
-        "--username",
-        "MCPBot",
-        "--auth",
-        "microsoft",
-        "--profiles-folder",
-        "D:/MinecraftMcpProfiles"
-      ]
-    }
-  }
-}
-```
+## 跨版本、插件和模组：支持边界
 
-Do not commit authentication caches or server credentials.
+| 场景 | 当前状态 |
+| --- | --- |
+| Minecraft Java / Paper 26.2 | 当前原生维护主线，协议 776；有实机验收 |
+| 旧版 Java 服务端 | 保留底层版本分派，历史矩阵验证过一组版本；不是所有历史版本、所有工具的兼容保证 |
+| 使用标准协议的服务端插件 | 通用命令、GUI、物品和实体工具可用于测试；特殊业务仍需具体适配和验收 |
+| 允许普通客户端连接的服务端模组 | 可能通过通用能力工作，尚未建立专门的模组兼容矩阵 |
+| 要求客户端模组的 Fabric / Forge / NeoForge 服务端 | 尚无专用握手、注册表和自定义通信适配，不声明支持 |
+| 自定义模型、资源包与基岩版 | 不声明完整模型/资源包渲染；基岩版不在当前范围 |
 
-## Command-line options
+曾验证 MythicMobs / MythicDungeons 菜单、插件物品和实体，以及 ModelEngine 加载与离线加入。**这不等于验证了模型画面，也不等于所有插件组合及生产配置都兼容。**
 
-| Option | Default | Description |
-| --- | --- | --- |
-| `--host` | `localhost` | Minecraft server hostname or IP address |
-| `--port` | `25565` | Minecraft server port |
-| `--username` | `LLMBot` | Bot username |
-| `--version` | auto-detect | Minecraft protocol version |
-| `--auth` | `offline` | Authentication mode: `offline` or `microsoft` |
-| `--profiles-folder` | unset | Microsoft authentication token cache directory |
+## 安装与启动
 
-## Available tools
+需要与 [package.json](package.json) engines 匹配的 Node.js（22.20+ 的 22.x、24.12+ 的 24.x，或 26+）、可连接的 Java 服务器及支持 MCP 的客户端。
 
-### Movement and world interaction
+推荐从本仓库的 `26.2` 分支构建，不要用原版 npm 包或其他分支替换原生依赖组合：
 
-- `get-position` — read the bot position
-- `move-to-position` — pathfind to coordinates with timeout handling
-- `look-at` — look at coordinates
-- `jump` — jump once
-- `move-in-direction` — move in a direction for a duration
-- `fly-to` — fly to coordinates in a compatible game mode
-- `place-block` — place a block
-- `dig-block` — dig a block
-- `get-block-info` — inspect a block
-- `find-blocks` — find nearby blocks by type
-
-### Inventory and item verification
-
-- `list-inventory` — list inventory stacks and slot indexes
-- `find-item` — find an inventory item by name
-- `equip-item` — equip an item to a supported equipment destination
-- `set-quickbar-slot` — select hotbar slot `0` through `8`
-- `drop-item` — drop all or part of a matching stack
-- `drop-selected-item` — drop the held stack or a specified amount
-- `pickup-nearest-item` — pathfind to and collect a dropped item
-- `inspect-item` — inspect display name, lore, NBT, data components, enchantments, and durability
-- `inspect-held-item` — inspect complete main-hand item metadata
-- `use-held-item` — activate a main-hand or offhand item for an optional number of ticks
-
-The inspection tools are suitable for verifying plugin-managed item identity and visible upgrade markers such as `+1` name prefixes without relying only on screenshots.
-
-### Containers and custom GUIs
-
-- `list-container` — list items in a container at world coordinates
-- `deposit-to-container` — deposit a matching item into a container
-- `withdraw-from-container` — withdraw a matching item from a container
-- `open-block-window` — open an interactive block GUI such as a chest, barrel, anvil, or grindstone
-- `list-current-window` — inspect the current window title, type, cursor stack, and slots
-- `inspect-window-slot` — inspect a GUI item's display name, lore, NBT, data components, enchantments, and durability
-- `click-window-slot` — perform a normal or right click with a Mineflayer click mode
-- `move-window-slot` — move a complete stack between two window slots
-- `quick-move-window-slot` — Shift-click a slot between the GUI and player inventory
-- `close-current-window` — close the current window
-
-These generic window tools can also operate plugin-created inventory GUIs once the bot has opened them through an in-game command, item, NPC, or block interaction.
-For cancelled Paper plugin GUI clicks, `click-window-slot` briefly waits for the server-restored slot before clearing Mineflayer's predicted cursor stack, so rejected button clicks do not leave a false cursor item in MCP state.
-If an accepted plugin GUI action synchronously closes its window, the tool reports `window closed by server` as a successful click result instead of dereferencing the cleared Mineflayer window.
-If Mineflayer's reconciliation tick waiter times out after the server has already accepted a click, the timeout is treated as diagnostic noise and does not replace the completed click result.
-
-### Entities and diagnostics
-
-- `find-entity` — find the nearest matching entity
-- `list-nearby-entities` — list nearby entity IDs, types, positions, and distances
-- `interact-entity` — attack, activate, or use the held item on an entity
-- `get-player-state` — read health, food, oxygen, experience, effects, game mode, position, and held item
-- `detect-gamemode` — read the current game mode
-- `wait-ticks` — wait a precise number of client ticks before the next assertion
-
-### Chat and command automation
-
-- `send-chat` — send chat or a slash command
-- `read-chat` — read recent player, plugin, command, and system messages while excluding high-frequency ActionBar/HUD noise
-- `run-command-and-wait` — run a command and wait for a case-insensitive matching response, with timeout diagnostics
-
-`run-command-and-wait` allows an AI test flow to distinguish success, missing permissions, missing currency, invalid equipment, and other plugin responses without requiring a player to copy messages manually.
-
-### Crafting and furnaces
-
-- `list-recipes` — list recipes craftable from the current inventory
-- `get-recipe` — inspect a recipe
-- `can-craft` — check whether required ingredients are available
-- `craft-item` — craft an item
-- `smelt-item` — load and operate a furnace-like block
-
-## Example plugin test flow
-
-An automated equipment-upgrade test can:
-
-1. Run the plugin command that opens its GUI with `run-command-and-wait`.
-2. Inspect the GUI using `list-current-window`.
-3. Move equipment and materials using `move-window-slot` or `quick-move-window-slot`.
-4. Click the confirmation slot with `click-window-slot`.
-5. Wait for server processing using `wait-ticks`.
-6. Inspect the resulting item with `inspect-item`.
-7. Assert the name prefix, lore, NBT, components, material consumption, and command response.
-
-The bot must have the same permissions and resources that the test scenario requires. Grant elevated permissions only on isolated development servers.
-
-## Local development
-
-```bash
-npm install
+```sh
+git clone --branch 26.2 https://github.com/zkonikishi/Minecraft-MCP-Server.git
+cd Minecraft-MCP-Server
+npm ci
+node tools/install-minecraft-data-26.2.mjs
 npm run build
-npm test
+node dist/main.js --host 127.0.0.1 --port 29565 --username MCPBot --auth offline --version 26.2
+```
+
+`29565` 仅为测试端口示例，需要先启动对应服务器。命令最后一行启动的是 stdio MCP 服务，不是 Minecraft 服务器。让 MCP 客户端启动同一 Node 程序并传入这些参数，才能调用工具；重新构建后需重启 MCP 进程。
+
+安装器会检查并安装随仓库提供的原生数据。若 npm 提示安装脚本未批准，应明确执行上述已审查的安装器，不要跳过，也不要全局放行所有脚本。遇到未知数据版本或覆盖冲突应停止排查。
+
+### 启动参数
+
+| 参数 | 默认值 | 含义 |
+| --- | --- | --- |
+| `--host` | `localhost` | 服务器地址 |
+| `--port` | `25565` | 服务器端口；测试时请显式设置 |
+| `--username` | `LLMBot` | 机器人账号 |
+| `--version` | 自动探测 | 目标协议版本，26.2 测试建议显式设置 |
+| `--auth` | `offline` | `offline` 或 `microsoft` |
+| `--profiles-folder` | 未设置 | Microsoft 认证缓存目录 |
+
+离线认证只适用于允许离线身份的测试服；正版服使用 `--auth microsoft` 并持久化认证缓存。令牌、账号缓存、服务器凭据不能提交到 Git。
+
+离线测试 ModelEngine 时应设置 `Eager-Generate-Skins=false`，或使用有合法皮肤资料的测试账号；离线身份缺少皮肤 URL 的异常不是 MCP 协议故障。
+
+### 依赖与工具链
+
+当前 Mineflayer 锁定为 `fac945d449bea06b8e3db482f6e5122bf74a0d40`；后续以 package.json 和 lockfile 为准。更新 Mineflayer 仓库**不会自动更新本 MCP**，必须重新锁定、安装并验收。
+
+编译使用 native TypeScript 7，工具链的 `typescript` 别名提供 TypeScript 6 API 兼容。不要直接互换；协议、数据、区块和物理依赖也不能按 npm 最新版本盲目替换。
+
+## 验证与开发
+
+```sh
+npm run build
+npm run typecheck
+npm run typecheck:compat
 npm run lint
+npm test
 ```
 
-Validation is revision-specific. Run build, both typechecks, lint and tests for the current checkout; do not treat historical test counts as current acceptance. See the dated reports under docs/.
+| 已记录的验收 | 范围 |
+| --- | --- |
+| 2026-09-15 视觉第一阶段 | build/lint/typecheck 通过，187 项 AVA 测试通过；独立 Paper 26.2-92 图像实测 6/6 |
+| 2026-09-15 底层更新 | 安装版重连、GUI/物品/实体、多行回复和解析异常检查 8/8 |
+| 2026-09-08 历史矩阵 | 28 版本内部矩阵：576 通过、40 不适用跳过；27 个旧版实际服务端基础测试及独立插件组合验证 |
 
-Run the built MCP server locally:
+这些是**对应修订的历史结果**，不是任意未来提交的保证。本次 README 更新不代表重跑了全部服务端矩阵。
 
-```bash
-node dist/main.js --host localhost --port 25565 --username MCPBot --auth offline
-```
+- [视觉验收](docs/visual-preview.md)
+- [9 月 15 日底层更新](docs/upstream-update-2026-09-15.md)
+- [历史兼容范围](docs/compatibility-2026-09-08.md)
+- [测试脚本说明](scripts/README.md)
 
-## Safety notes
+实机测试必须使用独立世界、明确的空闲测试端口和测试账号；退出机器人后通过 `stop` 正常关闭自己的服务器。不要修改正式服，不要批量终止 Java 进程。
 
-- Use a dedicated bot account on development servers.
-- Back up worlds before destructive block or inventory tests.
-- Do not store RCON passwords, Microsoft tokens, or other secrets in scripts, logs, documentation, or Git.
-- Prefer full MCP process restarts after rebuilding. Avoid using Minecraft `/reload` as a plugin deployment mechanism.
+## 独立化路线（规划，未完成）
 
-## License and attribution
+1. 提取稳定的游戏连接接口，减少工具层对 Mineflayer 内部对象的直接依赖。
+2. 建立版本能力检测和插件/模组适配器规范，按版本与能力声明支持范围。
+3. 扩展视觉到纹理、实体，再对自定义资源与模型单独适配。
+4. 在兼容接口和测试充分后，逐步允许替换连接后端，而非立即重写所有协议。
 
-This project is based on [`yuniko-software/minecraft-mcp-server`](https://github.com/yuniko-software/minecraft-mcp-server) and uses Mineflayer and the Model Context Protocol SDK. See [LICENSE](LICENSE) for license terms and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance.
+当前仍依赖 Mineflayer，没有完成完全解耦，也没有实现“所有插件、所有模组通用”。
 
-### 2026-09-07 验证结果
+## 许可证与来源
 
-当前依赖提交已正式安装后重跑：build、双 typecheck、lint 通过，AVA **175/175**；原生 Paper 26.2-92 四插件隔离组合 **8/8**，客户端和服务器自然退出，29565 释放。详见 [验收记录](docs/native-lifecycle-2026-09-07.md)。这不等于完整旧版/生产插件矩阵或图形渲染验收。
-
-如果 npm 提示安装脚本未批准，不要忽略提示后直接启动。从本仓库构建时，可明确执行 `node tools/install-minecraft-data-26.2.mjs` 后再 build；安装器遇到未知版本或数据冲突会停止，不要绕过防护。
-
-### 2026-09-08 扩展验收
-
-声明的 28 个版本内部矩阵：576 通过、40 项版本不适用跳过、0 失败；27 个旧版真实服务端基础测试和原生 Paper 26.2 验收通过。40 插件独立组合的 MCP 检查 8/8。具体范围、插件配置限制和 SHA 见 [完整记录](docs/compatibility-2026-09-08.md)。图形客户端不属于这两个项目的验收条件。
+本项目派生自 [yuniko-software/minecraft-mcp-server](https://github.com/yuniko-software/minecraft-mcp-server)，并使用 Mineflayer、PrismarineJS 生态及 MCP SDK。独立维护不抹去上游来源、版权和许可证义务。见 [LICENSE](LICENSE) 与 [CONTRIBUTING.md](CONTRIBUTING.md)。
