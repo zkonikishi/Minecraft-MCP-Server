@@ -6,6 +6,8 @@
 
 ## 两个项目如何分工
 
+现已接入 Via 系列的显式连接配置与诊断；插件/代理仍在外部运行。版本矩阵、命令和限制见 [Via 跨版本接入](docs/via-compatibility.md)。这不是任意内容模组兼容层。
+
 | 项目 | 职责 |
 | --- | --- |
 | **本仓库：Minecraft MCP Server** | MCP 工具、连接与重连、命令回复收集、插件 GUI/物品检查、实验性 PNG 结构视图 |
@@ -113,7 +115,7 @@ node dist/main.js --host 127.0.0.1 --port 29565 --username MCPBot --auth offline
 
 ### 依赖与工具链
 
-当前 Mineflayer 锁定为 `fac945d449bea06b8e3db482f6e5122bf74a0d40`；后续以 package.json 和 lockfile 为准。更新 Mineflayer 仓库**不会自动更新本 MCP**，必须重新锁定、安装并验收。
+当前 Mineflayer 锁定为 `f9e7db4447afda7838f08aa13430ec768738c178`；后续以 package.json 和 lockfile 为准。更新 Mineflayer 仓库**不会自动更新本 MCP**，必须重新锁定、安装并验收。
 
 编译使用 native TypeScript 7，工具链的 `typescript` 别名提供 TypeScript 6 API 兼容。不要直接互换；协议、数据、区块和物理依赖也不能按 npm 最新版本盲目替换。
 
@@ -130,6 +132,7 @@ npm test
 | 已记录的验收 | 范围 |
 | --- | --- |
 | 2026-09-15 视觉第一阶段 | build/lint/typecheck 通过，187 项 AVA 测试通过；独立 Paper 26.2-92 图像实测 6/6 |
+| 2026-09-15 Via 接入 | build/lint/typecheck 通过，194 项 AVA 测试通过；修正 26.2 出站交互包编号，跨版本边界见 Via 文档 |
 | 2026-09-15 底层更新 | 安装版重连、GUI/物品/实体、多行回复和解析异常检查 8/8 |
 | 2026-09-08 历史矩阵 | 28 版本内部矩阵：576 通过、40 不适用跳过；27 个旧版实际服务端基础测试及独立插件组合验证 |
 

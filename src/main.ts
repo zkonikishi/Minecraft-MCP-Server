@@ -4,7 +4,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { setupStdioFiltering } from './stdio-filter.js';
 import { log } from './logger.js';
-import { parseConfig } from './config.js';
+import { parseConfig, describeConnection } from './config.js';
 import { BotConnection } from './bot-connection.js';
 import { ToolFactory } from './tool-factory.js';
 import { MessageStore } from './message-store.js';
@@ -69,7 +69,7 @@ async function main() {
   registerContainerTools(factory, getBot);
   registerWindowTools(factory, getBot);
   registerItemInspectionTools(factory, getBot);
-  registerDiagnosticTools(factory, getBot);
+  registerDiagnosticTools(factory, getBot, () => describeConnection(config, getBot().version));
   registerVisualTools(factory, getBot);
 
   process.stdin.on('end', () => {

@@ -2,6 +2,7 @@ import mineflayer from 'mineflayer';
 import pathfinderPkg from 'mineflayer-pathfinder';
 const { pathfinder, Movements } = pathfinderPkg;
 import minecraftData from 'minecraft-data';
+import { validateConnectionMode, type ServerConfig } from './config.js';
 import { applyProtocolCompatibility, getSupportedMinecraftVersions } from './protocol-compatibility.js';
 
 function getLatestSupportedMinecraftVersion(): string {
@@ -18,14 +19,7 @@ export function getVersionSpecificPlugins(_version?: string): MineflayerPluginOp
   return { pathfinder };
 }
 
-interface BotConfig {
-  host: string;
-  port: number;
-  username: string;
-  version?: string;
-  auth: 'offline' | 'microsoft';
-  profilesFolder?: string;
-}
+type BotConfig = ServerConfig;
 
 interface ConnectionCallbacks {
   onLog: (level: string, message: string) => void;
@@ -42,6 +36,7 @@ export class BotConnection {
   private readonly reconnectDelayMs: number;
 
   constructor(config: BotConfig, callbacks: ConnectionCallbacks, reconnectDelayMs = 2000) {
+    validateConnectionMode(config);
     this.config = config;
     this.callbacks = callbacks;
     this.reconnectDelayMs = reconnectDelayMs;

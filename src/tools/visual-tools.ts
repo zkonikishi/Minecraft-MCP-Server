@@ -22,7 +22,11 @@ export function registerVisualTools(factory: ToolFactory, getBot: () => Bot): vo
           blockAt: position => bot.blockAt(position, false),
           isCurrent: () => getBot() === bot && bot._client.state === 'play'
         }, { width, distance, fov });
-        return factory.createImageResponse(result.png, JSON.stringify(result.metadata));
+        return factory.createImageResponse(result.png, JSON.stringify({
+          ...result.metadata,
+          clientVersion: bot.version,
+          dataSpace: 'Decoded client-protocol world; Via translation may substitute backend blocks/items.'
+        }));
       } finally { busy = false; }
     });
 }

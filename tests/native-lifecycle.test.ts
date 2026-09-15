@@ -4,6 +4,13 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
 
+test('26.2 spectator insertion preserves outgoing packet IDs and payloads', t => {
+  const output = execFileSync(process.execPath, ['--test', fileURLToPath(new URL('../tools/serverbound-26.2-regression.mjs', import.meta.url))], {
+    encoding: 'utf8', timeout: 30000, windowsHide: true
+  });
+  t.regex(output, /(?:pass 2|# pass 2)/);
+});
+
 for (const [script, count] of [['game-lifecycle-regression.js', 4], ['time-regression.js', 2], ['upstream-september-regression.js', 14]] as const) {
   test(`pinned Mineflayer passes ${script}`, t => {
     const output = execFileSync(process.execPath, ['--test', require.resolve(`mineflayer/tools/${script}`)], {

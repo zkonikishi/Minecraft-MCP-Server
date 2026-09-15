@@ -1,12 +1,13 @@
 import { z } from "zod";
 import type { Bot } from "mineflayer";
 import { ToolFactory } from "../tool-factory.js";
+import type { describeConnection } from '../config.js';
 
 function entityName(entity: Record<string, unknown>): string {
   return String(entity.username ?? entity.displayName ?? entity.name ?? entity.type ?? entity.id ?? "unknown");
 }
 
-export function registerDiagnosticTools(factory: ToolFactory, getBot: () => Bot): void {
+export function registerDiagnosticTools(factory: ToolFactory, getBot: () => Bot, connectionInfo?: () => ReturnType<typeof describeConnection>): void {
   factory.registerTool("get-player-state", "Read health, food, oxygen, experience, position, effects, held item, and game mode", {}, async () => {
     const bot = getBot();
     const effects = Object.values(bot.entity.effects ?? {}).map(effect => ({
@@ -14,6 +15,7 @@ export function registerDiagnosticTools(factory: ToolFactory, getBot: () => Bot)
     }));
     return factory.createResponse(JSON.stringify({
       username: bot.username,
+      connection: connectionInfo?.(),
       health: bot.health,
       food: bot.food,
       foodSaturation: bot.foodSaturation,

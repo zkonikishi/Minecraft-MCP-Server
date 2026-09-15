@@ -8,10 +8,37 @@ export interface ServerConfig {
   version?: string;
   auth: 'offline' | 'microsoft';
   profilesFolder?: string;
+  connectionMode?: 'native' | 'via-plugin' | 'via-proxy' | 'via-server-mod';
+  backendVersion?: string;
+}
+
+export function validateConnectionMode(config: ServerConfig): void {
+  if (config.connectionMode && !['native', 'via-plugin', 'via-proxy', 'via-server-mod'].includes(config.connectionMode)) {
+    throw new Error('Unknown connection mode');
+  }
+  if (config.connectionMode && config.connectionMode !== 'native' && !config.version?.trim()) {
+    throw new Error('Via mode requires explicit --version for the BOT client protocol, not the backend server version');
+  }
+  if (config.backendVersion && (!config.connectionMode || config.connectionMode === 'native')) {
+    throw new Error('--backend-version is only a declared backend label for Via mode');
+  }
+}
+
+export function describeConnection(config: ServerConfig, clientVersion: string) {
+  return {
+    mode: config.connectionMode ?? 'native',
+    modeSource: 'user-declared',
+    endpoint: { host: config.host, port: config.port },
+    requestedClientVersion: config.version ?? null,
+    clientVersion,
+    declaredBackendVersion: config.backendVersion ?? null,
+    translationDetection: 'not-probed',
+    note: 'Mode/backend labels are configuration, not detection or proof of a translator. Via runs externally; decoded blocks/items reflect the client protocol.'
+  };
 }
 
 export function parseConfig(): ServerConfig {
-  return yargs(hideBin(process.argv))
+  const config = yargs(hideBin(process.argv))
     .version(false)
     .option('host', {
       type: 'string',
@@ -30,7 +57,14 @@ export function parseConfig(): ServerConfig {
     })
     .option('version', {
       type: 'string',
-      description: 'Minecraft protocol version (for example, 1.21.11)'
+      description: 'Bot client protocol version; required explicitly with Via modes'
+    })
+    .option('connection-mode', {
+      type: 'string', choices: ['native', 'via-plugin', 'via-proxy', 'via-server-mod'] as const,
+      default: 'native' as const, description: 'Declared connection topology; does not install or start Via components'
+    })
+    .option('backend-version', {
+      type: 'string', description: 'Optional declared backend version for Via diagnostics; never selects the bot protocol'
     })
     .option('auth', {
       type: 'string',
@@ -45,4 +79,6 @@ export function parseConfig(): ServerConfig {
     .help()
     .alias('help', 'h')
     .parseSync();
+  validateConnectionMode(config);
+  return config;
 }
